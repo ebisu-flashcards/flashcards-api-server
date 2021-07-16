@@ -19,12 +19,16 @@ REQUIREMENTS: dict = {
         "fastapi",
         "pydantic",
         "uvicorn[standard]",
-        # "flashcards-core"
+        "flashcards-core",
     ],
-    'test': [
+    "test": [
         "pytest",
         "pytest-cov",
         "pytest-random-order",
+        "pre-commit",
+        "black",
+        "flake8",
+        "coveralls",  # To publish the coverage data on coveralls
     ],
     'doc': [
         'sphinx',
