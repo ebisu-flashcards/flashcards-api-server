@@ -3,6 +3,7 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=python
 
 **/*.db
+**/redoc.html
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
