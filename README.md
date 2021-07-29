@@ -13,7 +13,8 @@ familiar with Python.
 ```bash
 > python3 -m venv venv
 > source venv/bin/activate
-> pip install .
+> pip install -e git+https://github.com/ebisu-flashcards/flashcards-core.git#egg=flashcards_core
+> pip install -e .
 
 [ ... pip logs ... ]
 

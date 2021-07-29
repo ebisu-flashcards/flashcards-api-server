@@ -3,9 +3,9 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
+from flashcards_core.database import Card as CardModel
 
-from flashcards_core.database.cards import Card as CardModel
-from flashcards_api.main import get_db
+from flashcards_api.main import get_session
 
 
 class CardBase(BaseModel):
@@ -32,31 +32,37 @@ router = APIRouter(
 
 
 @router.get("/", response_model=List[Card])
-def get_cards(offset: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    return CardModel.get_all(db=db, offset=offset, limit=limit)
+def get_cards(
+    offset: int = 0, limit: int = 100, session: Session = Depends(get_session)
+):
+    return CardModel.get_all(session=session, offset=offset, limit=limit)
 
 
 @router.get("/{card_id}", response_model=Card)
-def get_card(card_id: int, db: Session = Depends(get_db)):
-    db_card = CardModel.get_one(db=db, object_id=card_id)
-    if db_card is None:
-        raise HTTPException(status_code=404, detail=f"Card with ID '{card_id}' not found")
-    return db_card
+def get_card(card_id: int, session: Session = Depends(get_session)):
+    session_card = CardModel.get_one(session=session, object_id=card_id)
+    if session_card is None:
+        raise HTTPException(
+            status_code=404, detail=f"Card with ID '{card_id}' not found"
+        )
+    return session_card
 
 
 @router.post("/", response_model=CardCreate)
-def create_card(card: CardCreate, db: Session = Depends(get_db)):
-    return CardModel.create(db=db, **card.dict())
+def create_card(card: CardCreate, session: Session = Depends(get_session)):
+    return CardModel.create(session=session, **card.dict())
 
 
 @router.put("/{card_id}", response_model=Card)
-def edit_card(card: CardCreate, card_id: int, db: Session = Depends(get_db)):
-    return CardModel.update(db=db, object_id=card_id, **card.dict())
+def edit_card(card: CardCreate, card_id: int, session: Session = Depends(get_session)):
+    return CardModel.update(session=session, object_id=card_id, **card.dict())
 
 
 @router.delete("/{card_id}")
-def delete_card(card_id: int, db: Session = Depends(get_db)):
+def delete_card(card_id: int, session: Session = Depends(get_session)):
     try:
-        CardModel.delete(db=db, object_id=card_id)
+        CardModel.delete(session=session, object_id=card_id)
     except ValueError:
-        raise HTTPException(status_code=404, detail=f"Card with ID '{card_id}' not found")
+        raise HTTPException(
+            status_code=404, detail=f"Card with ID '{card_id}' not found"
+        )

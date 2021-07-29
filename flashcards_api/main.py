@@ -1,26 +1,24 @@
 from fastapi import FastAPI, Request, Response
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from flashcards_core.database import init_db
 
-from flashcards_api.constants import SQLALCHEMY_DATABASE_URL, DISPLAY_TRACEBACK_ON_500
-
-
-# Create database connection
-engine = create_engine(
+from flashcards_api.constants import (
     SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},  # Needed only for SQLite
+    SQLALCHEMY_DATABASE_CONNECTION_ARGS,
+    DISPLAY_TRACEBACK_ON_500,
 )
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-# Allow other parts of the app to access the db instance properly
+SessionLocal = init_db(SQLALCHEMY_DATABASE_URL, SQLALCHEMY_DATABASE_CONNECTION_ARGS)
+
+
+# Allow other parts of the app to access the database properly
 # FastAPI "Dependency" (used with Depends)
-def get_db():
-    db = SessionLocal()
+def get_session():
+    session = SessionLocal()
     try:
-        yield db
+        yield session
     finally:
-        db.close()
+        session.close()
 
 
 # Create the FastAPI app
@@ -28,11 +26,11 @@ app = FastAPI()
 
 
 # Import and include all routers
-from flashcards_api.algorithms import router as algorithms_router
-from flashcards_api.cards import router as cards_router
-from flashcards_api.decks import router as decks_router
-from flashcards_api.facts import router as facts_router
-from flashcards_api.tags import router as tags_router
+from flashcards_api.algorithms import router as algorithms_router  # noqa: F401, E402
+from flashcards_api.cards import router as cards_router  # noqa: F401, E402
+from flashcards_api.decks import router as decks_router  # noqa: F401, E402
+from flashcards_api.facts import router as facts_router  # noqa: F401, E402
+from flashcards_api.tags import router as tags_router  # noqa: F401, E402
 
 
 app.include_router(algorithms_router)
@@ -45,7 +43,7 @@ app.include_router(tags_router)
 # Default endpoint
 @app.get("/")
 async def root():
-    return {"message": "Hello Bigger Applications!"}
+    return {"message": "Hello Reader!"}
 
 
 # Debug 500 handler to display the tracebacks in the returned message
@@ -62,5 +60,5 @@ if DISPLAY_TRACEBACK_ON_500:
                 traceback.format_exception(
                     etype=type(exc), value=exc, tb=exc.__traceback__
                 )
-            )
+            ),
         )
