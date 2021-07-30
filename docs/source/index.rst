@@ -5,5 +5,3 @@
 .. toctree::
    :hidden:
    :maxdepth: 2
-
-   redoc
