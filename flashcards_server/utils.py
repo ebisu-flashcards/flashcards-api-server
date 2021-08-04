@@ -1,5 +1,5 @@
 import json
-from flashcards_api.main import app
+from flashcards_server.main import app
 
 
 HTML_TEMPLATE = """
@@ -37,3 +37,5 @@ def generate_redoc():
     """
     with open("redoc.html", "w") as fd:
         fd.write(HTML_TEMPLATE.format(json.dumps(app.openapi())))
+    with open("spec.json", "w") as fd:
+        json.dump(app.openapi(), fd)
