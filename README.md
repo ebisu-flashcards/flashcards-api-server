@@ -1,8 +1,8 @@
 # Flashcards API Server - WIP
 
-[![Unit Tests](https://github.com/ebisu-flashcards/flashcards-api/actions/workflows/tests.yml/badge.svg)](https://github.com/ebisu-flashcards/flashcards-api/actions/workflows/tests.yml)  [![Coverage Status](https://coveralls.io/repos/github/ebisu-flashcards/flashcards-api/badge.svg)](https://coveralls.io/github/ebisu-flashcards/flashcards-api)  [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)   <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
+[![Unit Tests](https://github.com/ebisu-flashcards/flashcards-api/actions/workflows/tests.yml/badge.svg)](https://github.com/ebisu-flashcards/flashcards-api/actions/workflows/tests.yml)  [![Coverage Status](https://coveralls.io/repos/github/ebisu-flashcards/flashcards-api/badge.svg)](https://coveralls.io/github/ebisu-flashcards/flashcards-api)   [![License: AGPL v3](https://img.shields.io/badge/License-AGPLv3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)   [![Code on: GitHub](https://img.shields.io/badge/Code%20on-GitHub-blueviolet)](https://github.com/ebisu-flashcards/flashcards-server)    [![Code style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-Flashcards REST API.
+Flashcards REST API server.
 
 **NOTE**: This is a work-in-progress, not running application. 
 Do not expect it to just download it and be able to run it if you're not
@@ -31,7 +31,7 @@ INFO:     127.0.0.1:60494 - "GET / HTTP/1.1" 200 OK
 
 Visit either `127.0.0.1:8000/docs` or `127.0.0.1:8000/redoc`.
 
-You can also see the docs at [https://ebisu-flashcards.github.io/flashcards-api/redoc].
+You can also see the API docs at https://ebisu-flashcards.github.io/flashcards-api/redoc.
 
 
 # Contribute
