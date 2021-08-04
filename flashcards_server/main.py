@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, Response
 from flashcards_core.database import init_db
 
-from flashcards_api.constants import (
+from flashcards_server.constants import (
     SQLALCHEMY_DATABASE_URL,
     SQLALCHEMY_DATABASE_CONNECTION_ARGS,
     DISPLAY_TRACEBACK_ON_500,
@@ -26,11 +26,11 @@ app = FastAPI()
 
 
 # Import and include all routers
-from flashcards_api.algorithms import router as algorithms_router  # noqa: F401, E402
-from flashcards_api.cards import router as cards_router  # noqa: F401, E402
-from flashcards_api.decks import router as decks_router  # noqa: F401, E402
-from flashcards_api.facts import router as facts_router  # noqa: F401, E402
-from flashcards_api.tags import router as tags_router  # noqa: F401, E402
+from flashcards_server.algorithms import router as algorithms_router  # noqa: F401, E402
+from flashcards_server.cards import router as cards_router  # noqa: F401, E402
+from flashcards_server.decks import router as decks_router  # noqa: F401, E402
+from flashcards_server.facts import router as facts_router  # noqa: F401, E402
+from flashcards_server.tags import router as tags_router  # noqa: F401, E402
 
 
 app.include_router(algorithms_router)
