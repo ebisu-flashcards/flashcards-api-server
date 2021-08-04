@@ -31,7 +31,7 @@ INFO:     127.0.0.1:60494 - "GET / HTTP/1.1" 200 OK
 
 Visit either `127.0.0.1:8000/docs` or `127.0.0.1:8000/redoc`.
 
-You can also see the API docs at https://ebisu-flashcards.github.io/flashcards-api/redoc.
+You can also see the API docs at https://ebisu-flashcards.github.io/flashcards-server/redoc.
 
 
 # Contribute
