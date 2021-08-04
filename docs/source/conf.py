@@ -14,12 +14,12 @@ import os
 import sys
 
 sys.path.insert(0, os.path.abspath(".."))
-import flashcards_api  # noqa: E402, F401
+import flashcards_server  # noqa: E402, F401
 
 
 # -- Project information -----------------------------------------------------
 
-project = "flashcards-api"
+project = "flashcards-server"
 copyright = "2021, Sara Zanzottera"
 author = "Sara Zanzottera"
 

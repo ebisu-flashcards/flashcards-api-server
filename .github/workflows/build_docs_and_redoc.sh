@@ -60,12 +60,12 @@ touch .nojekyll
 # Add README
 cat > README.md <<EOF
 
-# flashcards-api - Internal Documentation Build Artifacts
+# flashcards-server - Internal Documentation Build Artifacts
 
 Nothing to see here. The content of this branch is essentially a cache for build artifacts.
 
 If you are looking for the documentation, check the relevant development branch's 'docs/' directory or
-go to https://ebisu-flashcards.github.io/flashcards-core/ .
+go to https://ebisu-flashcards.github.io/flashcards-server/ .
 
 EOF
  
