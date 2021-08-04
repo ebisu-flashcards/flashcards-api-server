@@ -1,4 +1,4 @@
-# Flashcards API - WIP
+# Flashcards API Server - WIP
 
 [![Unit Tests](https://github.com/ebisu-flashcards/flashcards-api/actions/workflows/tests.yml/badge.svg)](https://github.com/ebisu-flashcards/flashcards-api/actions/workflows/tests.yml)  [![Coverage Status](https://coveralls.io/repos/github/ebisu-flashcards/flashcards-api/badge.svg)](https://coveralls.io/github/ebisu-flashcards/flashcards-api)  [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)   <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 
@@ -13,7 +13,7 @@ familiar with Python.
 ```bash
 > python3 -m venv venv
 > source venv/bin/activate
-> pip install -e git+https://github.com/ebisu-flashcards/flashcards-core.git#egg=flashcards_core
+> pip install -e git+https://github.com/ebisu-flashcards/flashcards-server.git#egg=flashcards_server
 > pip install -e .
 
 [ ... pip logs ... ]
