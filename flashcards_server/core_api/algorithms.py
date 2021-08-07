@@ -1,7 +1,9 @@
 from typing import List
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from flashcards_core.schedulers import get_available_schedulers
+
+from flashcards_server.auth.functions import oauth2_scheme
 
 
 router = APIRouter(
@@ -13,5 +15,7 @@ router = APIRouter(
 
 
 @router.get("/", response_model=List[str])
-def get_algorithms(offset: int = 0, limit: int = 100):
+def get_algorithms(
+    token: str = Depends(oauth2_scheme), offset: int = 0, limit: int = 100
+):
     return get_available_schedulers()

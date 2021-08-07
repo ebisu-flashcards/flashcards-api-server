@@ -1,36 +1,18 @@
 from fastapi import FastAPI, Request, Response
-from flashcards_core.database import init_db
-
-from flashcards_server.constants import (
-    SQLALCHEMY_DATABASE_URL,
-    SQLALCHEMY_DATABASE_CONNECTION_ARGS,
-    DISPLAY_TRACEBACK_ON_500,
-)
-
-
-SessionLocal = init_db(SQLALCHEMY_DATABASE_URL, SQLALCHEMY_DATABASE_CONNECTION_ARGS)
-
-
-# Allow other parts of the app to access the database properly
-# FastAPI "Dependency" (used with Depends)
-def get_session():
-    session = SessionLocal()
-    try:
-        yield session
-    finally:
-        session.close()
-
+from flashcards_server.constants import DISPLAY_TRACEBACK_ON_500
 
 # Create the FastAPI app
 app = FastAPI()
 
-
 # Import and include all routers
-from flashcards_server.algorithms import router as algorithms_router  # noqa: F401, E402
-from flashcards_server.cards import router as cards_router  # noqa: F401, E402
-from flashcards_server.decks import router as decks_router  # noqa: F401, E402
-from flashcards_server.facts import router as facts_router  # noqa: F401, E402
-from flashcards_server.tags import router as tags_router  # noqa: F401, E402
+from flashcards_server.core_api.algorithms import (  # noqa: F401, E402
+    router as algorithms_router,
+)
+from flashcards_server.core_api.cards import router as cards_router  # noqa: F401, E402
+from flashcards_server.core_api.decks import router as decks_router  # noqa: F401, E402
+from flashcards_server.core_api.facts import router as facts_router  # noqa: F401, E402
+from flashcards_server.core_api.tags import router as tags_router  # noqa: F401, E402
+from flashcards_server.auth.api import token_router, users_router  # noqa: F401, E402
 
 
 app.include_router(algorithms_router)
@@ -38,6 +20,9 @@ app.include_router(cards_router)
 app.include_router(decks_router)
 app.include_router(facts_router)
 app.include_router(tags_router)
+
+app.include_router(token_router)
+app.include_router(users_router)
 
 
 # Default endpoint

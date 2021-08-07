@@ -1,11 +1,9 @@
-from typing import List
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from flashcards_core.database import Card as CardModel
 
-from flashcards_server.main import get_session
+from flashcards_server.auth.functions import get_session
 
 
 class CardBase(BaseModel):
@@ -29,13 +27,6 @@ router = APIRouter(
     # dependencies=[Depends(get_token_header)],
     responses={404: {"description": "Not found"}},
 )
-
-
-@router.get("/", response_model=List[Card])
-def get_cards(
-    offset: int = 0, limit: int = 100, session: Session = Depends(get_session)
-):
-    return CardModel.get_all(session=session, offset=offset, limit=limit)
 
 
 @router.get("/{card_id}", response_model=Card)

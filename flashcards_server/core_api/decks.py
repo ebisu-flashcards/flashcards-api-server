@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from flashcards_core.database import Deck as DeckModel
 
-from flashcards_server.main import get_session
+from flashcards_server.auth.functions import get_session
 
 
 class DeckBase(BaseModel):

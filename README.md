@@ -18,7 +18,7 @@ familiar with Python.
 
 [ ... pip logs ... ]
 
-> uvicorn flashcards_api.main:app
+> uvicorn flashcards_server.main:app
 
 INFO:     Started server process [XXXX]
 INFO:     Waiting for application startup.
@@ -41,6 +41,7 @@ You can also see the API docs at https://ebisu-flashcards.github.io/flashcards-s
 > source venv/bin/activate
 > pip install -e .
 > pre-commit install
+> uvicorn flashcards_server.main:app --reload
 
 ... do some changes ...
 
