@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from flashcards_core.database import Card as CardModel
 
-from flashcards_server.auth.functions import get_session
+from flashcards_server.api import get_session
 
 
 class CardBase(BaseModel):

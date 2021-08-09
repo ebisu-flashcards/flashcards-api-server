@@ -5,14 +5,15 @@ from flashcards_server.constants import DISPLAY_TRACEBACK_ON_500
 app = FastAPI()
 
 # Import and include all routers
-from flashcards_server.core_api.algorithms import (  # noqa: F401, E402
+from flashcards_server.api.algorithms import (  # noqa: F401, E402
     router as algorithms_router,
 )
-from flashcards_server.core_api.cards import router as cards_router  # noqa: F401, E402
-from flashcards_server.core_api.decks import router as decks_router  # noqa: F401, E402
-from flashcards_server.core_api.facts import router as facts_router  # noqa: F401, E402
-from flashcards_server.core_api.tags import router as tags_router  # noqa: F401, E402
-from flashcards_server.auth.api import token_router, users_router  # noqa: F401, E402
+from flashcards_server.api.cards import router as cards_router  # noqa: F401, E402
+from flashcards_server.api.decks import router as decks_router  # noqa: F401, E402
+from flashcards_server.api.facts import router as facts_router  # noqa: F401, E402
+from flashcards_server.api.tags import router as tags_router  # noqa: F401, E402
+from flashcards_server.api.token import router as token_router  # noqa: F401, E402
+from flashcards_server.api.users import router as users_router  # noqa: F401, E402
 
 
 app.include_router(algorithms_router)
@@ -20,7 +21,6 @@ app.include_router(cards_router)
 app.include_router(decks_router)
 app.include_router(facts_router)
 app.include_router(tags_router)
-
 app.include_router(token_router)
 app.include_router(users_router)
 
