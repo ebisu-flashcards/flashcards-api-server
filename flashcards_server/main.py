@@ -1,8 +1,13 @@
 from fastapi import FastAPI, Request, Response
+import flashcards_server
 from flashcards_server.constants import DISPLAY_TRACEBACK_ON_500
 
 # Create the FastAPI app
-app = FastAPI()
+app = FastAPI(
+    title="Flashcards API",
+    description="API Doc for flashcards-server",
+    version=flashcards_server.__version__,
+)
 
 # Import and include all routers
 from flashcards_server.api.algorithms import (  # noqa: F401, E402

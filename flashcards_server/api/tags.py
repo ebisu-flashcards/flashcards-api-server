@@ -17,8 +17,6 @@ class TagCreate(TagBase):
 
 
 class Tag(TagBase):
-    id: int
-
     class Config:
         orm_mode = True
 
@@ -41,16 +39,16 @@ def get_tags(
     return TagModel.get_all(session=session, offset=offset, limit=limit)
 
 
-@router.get("/{tag_id}", response_model=Tag)
+@router.get("/{tag_name}", response_model=Tag)
 def get_tag(
-    tag_id: int,
+    tag_name: str,
     token: str = Depends(oauth2_scheme),
     session: Session = Depends(get_session),
 ):
-    session_tag = TagModel.get_one(session=session, object_id=tag_id)
-    if session_tag is None:
-        raise HTTPException(status_code=404, detail=f"Tag with ID '{tag_id}' not found")
-    return session_tag
+    db_tag = TagModel.get_by_name(session=session, name=tag_name)
+    if db_tag is None:
+        raise HTTPException(status_code=404, detail=f"Tag '{tag_name}' not found")
+    return db_tag
 
 
 @router.post("/", response_model=Tag)
@@ -62,23 +60,25 @@ def create_tag(
     return TagModel.create(session=session, **tag.dict())
 
 
-@router.patch("/{tag_id}", response_model=Tag)
+@router.patch("/{tag_name}", response_model=Tag)
 def edit_tag(
     tag: TagCreate,
-    tag_id: int,
+    tag_name: str,
     token: str = Depends(oauth2_scheme),
     session: Session = Depends(get_session),
 ):
-    return TagModel.update(session=session, object_id=tag_id, **tag.dict())
+    db_tag = TagModel.get_by_name(session=session, name=tag_name)
+    return TagModel.update(session=session, object_id=db_tag.id, **tag.dict())
 
 
-@router.delete("/{tag_id}")
+@router.delete("/{tag_name}")
 def delete_tag(
-    tag_id: int,
+    tag_name: str,
     token: str = Depends(oauth2_scheme),
     session: Session = Depends(get_session),
 ):
     try:
-        TagModel.delete(session=session, object_id=tag_id)
+        tag = TagModel.get_by_name(session=session, name=tag_name)
+        TagModel.delete(session=session, object_id=tag.id)
     except ValueError:
-        raise HTTPException(status_code=404, detail=f"Tag with ID '{tag_id}' not found")
+        raise HTTPException(status_code=404, detail=f"Tag '{tag_name}' not found")
