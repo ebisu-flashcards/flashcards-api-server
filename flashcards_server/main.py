@@ -5,7 +5,7 @@ from flashcards_server.constants import DISPLAY_TRACEBACK_ON_500
 # Create the FastAPI app
 app = FastAPI(
     title="Flashcards API",
-    description="API Doc for flashcards-server",
+    description="API Docs for flashcards-server",
     version=flashcards_server.__version__,
 )
 
@@ -33,7 +33,7 @@ app.include_router(users_router)
 # Default endpoint
 @app.get("/")
 async def root():
-    return {"message": "Hello Reader!"}
+    return {"message": "Hello!"}
 
 
 # Debug 500 handler to display the tracebacks in the returned message
