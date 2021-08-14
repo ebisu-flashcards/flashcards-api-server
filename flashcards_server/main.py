@@ -7,7 +7,7 @@ app = FastAPI(
     title="Flashcards API",
     description="API Docs for flashcards-server",
     version=flashcards_server.__version__,
-    root_path="/api/v1"
+    root_path="flashcards/api/v1",
 )
 
 # Import and include all routers
