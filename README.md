@@ -13,7 +13,7 @@ familiar with Python.
 > git clone https://github.com/ebisu-flashcards/flashcards-server
 > cd flashcards_server/
 > docker build -t flashcards .
-> docker run --name flashcards-container -p 80:80 --rm flashcards
+> docker run --name flashcards-container -p 8000:8000 -d --rm flashcards
 ```
 
 ## OpenAPI Docs
