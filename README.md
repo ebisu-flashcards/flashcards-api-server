@@ -8,23 +8,12 @@ Flashcards REST API server.
 Do not expect it to just download it and be able to run it if you're not
 familiar with Python.
 
-## Setup development server
-
+## Setup with Docker
 ```bash
-> python3 -m venv venv
-> source venv/bin/activate
-> pip install -e git+https://github.com/ebisu-flashcards/flashcards-server.git#egg=flashcards_server
-> pip install -e .
-
-[ ... pip logs ... ]
-
-> uvicorn flashcards_server.main:app
-
-INFO:     Started server process [XXXX]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
-INFO:     127.0.0.1:60494 - "GET / HTTP/1.1" 200 OK
+> git clone https://github.com/ebisu-flashcards/flashcards-server
+> cd flashcards_server/
+> docker build -t flashcards .
+> docker run --name flashcards-container -p 80:80 -e MODULE_NAME="flashcards_server.main" flashcards
 ```
 
 ## OpenAPI Docs
@@ -39,9 +28,15 @@ You can also see the API docs at https://ebisu-flashcards.github.io/flashcards-s
 ```bash
 > python3 -m venv venv
 > source venv/bin/activate
-> pip install -e .
+> pip install -e git+https://github.com/ebisu-flashcards/flashcards-core.git#egg=flashcards_core
+> pip install -e .[dev]
 > pre-commit install
 > uvicorn flashcards_server.main:app --reload
+INFO:     Started server process [XXXX]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:60494 - "GET / HTTP/1.1" 200 OK
 
 ... do some changes ...
 
