@@ -1,5 +1,7 @@
 FROM tiangolo/uvicorn-gunicorn-fastapi:python3.8
 
+ENV PORT="8000"
+
 COPY . /app
 
 RUN apt install git
