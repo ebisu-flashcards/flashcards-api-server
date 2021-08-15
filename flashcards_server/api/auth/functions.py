@@ -1,12 +1,17 @@
 from typing import Optional
 
+from datetime import timedelta, datetime
 from jose import jwt, JWTError
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from flashcards_server.api import get_session, oauth2_scheme, pwd_context
-from flashcards_server.api.users.models import User as UserModel
-from flashcards_server.constants import SECRET_KEY, HASHING_ALGORITHM
+from flashcards_server.api.auth.models import User as UserModel
+from flashcards_server.constants import (
+    SECRET_KEY,
+    HASHING_ALGORITHM,
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+)
 
 
 def authenticate(
@@ -28,6 +33,26 @@ def authenticate(
     if not pwd_context.verify(password, db_user.hashed_password):
         return None
     return db_user
+
+
+def create_access_token(
+    data_to_encode: dict, expires_delta: Optional[timedelta] = None
+):
+    """
+    Create a JWT token with the given data.
+
+    :param data_to_encode: the information to encode in the JWT
+    :param expires_delta: the expiration time delta. If None, uses `ACCESS_TOKEN_EXPIRE_MINUTES`
+    :return: the encoded JWT
+    """
+    to_encode = data_to_encode.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=HASHING_ALGORITHM)
+    return encoded_jwt
 
 
 async def get_current_user(

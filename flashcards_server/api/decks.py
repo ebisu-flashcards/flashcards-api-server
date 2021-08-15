@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from flashcards_core.database import Deck as DeckModel, Tag as TagModel
 
 from flashcards_server.api import get_session, oauth2_scheme
-from flashcards_server.api.users import get_current_user, UserModel
+from flashcards_server.api.auth import get_current_user, UserModel
 from flashcards_server.api.tags import Tag, TagCreate
 
 
@@ -39,12 +39,20 @@ class Deck(DeckBase):
         orm_mode = True
 
 
-def deck_exists(session: Session, deck_id: UUID) -> DeckModel:
+def valid_deck(
+    deck_id: UUID,
+    user: UserModel,
+    session: Session = Depends(get_session),
+) -> DeckModel:
     """
-    Check that the deck actually exists.
+    Check that the deck actually exists and belongs to the current user.
+
+    :param deck_id: the ID of the deck to test.
+    :returns: the deck object, if all checks passes.
+    :raises: HTTPException is any check fails.
     """
     deck = DeckModel.get_one(session=session, object_id=deck_id)
-    if not deck:
+    if not deck or not user.owns_deck(session=session, deck_id=deck_id):
         raise HTTPException(
             status_code=404, detail=f"Deck with ID '{deck_id}' not found"
         )
@@ -54,7 +62,7 @@ def deck_exists(session: Session, deck_id: UUID) -> DeckModel:
 router = APIRouter(
     prefix="/decks",
     tags=["decks"],
-    # dependencies=[Depends(get_token_header)],
+    dependencies=[Depends(oauth2_scheme)],
     responses={404: {"description": "Not found"}},
 )
 
@@ -62,7 +70,7 @@ router = APIRouter(
 @router.get("/{deck_id}", response_model=Deck)
 def get_deck(
     deck_id: UUID,
-    token: str = Depends(oauth2_scheme),
+    current_user: UserModel = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -71,13 +79,12 @@ def get_deck(
     :param deck_id: the id of the deck to get
     :returns: The details of the deck. Cards list not included, use ``/deck/<uuid>/cards``
     """
-    return deck_exists(session=session, deck_id=deck_id)
+    return valid_deck(session=session, user=current_user, deck_id=deck_id)
 
 
 @router.post("/", response_model=Deck)
 def create_deck(
     deck: DeckCreate,
-    token: str = Depends(oauth2_scheme),
     current_user: UserModel = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
@@ -105,7 +112,7 @@ def create_deck(
 def edit_deck(
     deck_id: UUID,
     new_deck_data: DeckPatch,
-    token: str = Depends(oauth2_scheme),
+    current_user: UserModel = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -115,7 +122,7 @@ def edit_deck(
     :param new_deck_data: the new details of the deck. Can be partial.
     :returns: The modified deck. Cards list not included, use ``/deck/<uuid>/cards``
     """
-    deck_to_edit = deck_exists(session=session, deck_id=deck_id)
+    deck_to_edit = valid_deck(session=session, user=current_user, deck_id=deck_id)
 
     update_data = new_deck_data.dict(exclude_unset=True)
     tags = update_data.pop("tags", [])
@@ -138,7 +145,6 @@ def edit_deck(
 @router.delete("/{deck_id}")
 def delete_deck(
     deck_id: UUID,
-    token: str = Depends(oauth2_scheme),
     current_user: UserModel = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
@@ -148,5 +154,5 @@ def delete_deck(
     :param deck_id: the id of the deck to remove
     :returns: None
     """
-    deck_exists(session=session, deck_id=deck_id)
+    valid_deck(session=session, user=current_user, deck_id=deck_id)
     current_user.delete_deck(session=session, deck_id=deck_id)

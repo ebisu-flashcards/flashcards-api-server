@@ -1,6 +1,7 @@
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from uuid import UUID
+from datetime import datetime
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -10,10 +11,11 @@ from flashcards_core.database import (
     Fact as FactModel,
 )
 
-from flashcards_server.api import get_session, oauth2_scheme
-from flashcards_server.api.decks import router, deck_exists
+from flashcards_server.api import get_session
+from flashcards_server.api.decks import router, valid_deck
 from flashcards_server.api.facts import Fact
 from flashcards_server.api.tags import Tag, TagCreate
+from flashcards_server.api.auth import UserModel, get_current_user
 
 
 class CardCreate(BaseModel):
@@ -42,11 +44,29 @@ class Card(BaseModel):
         orm_mode = True
 
 
-def card_exists_in_deck(session: Session, deck_id: UUID, card_id: UUID) -> CardModel:
+class Review(BaseModel):
+    id: UUID
+    card_id: UUID
+    result: Any
+    algorithm: str
+    datetime: datetime
+
+    class Config:
+        orm_mode = True
+
+
+def valid_card(
+    session: Session, user: UserModel, deck_id: UUID, card_id: UUID
+) -> CardModel:
     """
-    Check that the card actually exists and belongs to the given deck.
+    Check that the card actually exists and belongs to the given (valid) deck.
+
+    :param deck_id: the deck this card should belong to
+    :param card_id: the card to check
+    :returns: the card, if all check passes.
+    :raises HTTPException if any check fails
     """
-    deck_exists(session=session, deck_id=deck_id)
+    valid_deck(session=session, user=user, deck_id=deck_id)
     card = CardModel.get_one(session=session, object_id=card_id)
     if card is None or card.deck_id != deck_id:
         raise HTTPException(
@@ -60,7 +80,7 @@ def get_cards(
     deck_id: UUID,
     offset: int = 0,
     limit: int = 100,
-    token: str = Depends(oauth2_scheme),
+    current_user: UserModel = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -71,7 +91,7 @@ def get_cards(
     :param limit: for pagination, maximum number of cards to return.
     :returns: List of cards.
     """
-    deck_exists(session=session, deck_id=deck_id)
+    valid_deck(session=session, user=current_user, deck_id=deck_id)
     db_cards = (
         session.query(CardModel)
         .filter(CardModel.deck_id == deck_id)
@@ -86,7 +106,7 @@ def get_cards(
 def get_card(
     deck_id: UUID,
     card_id: UUID,
-    token: str = Depends(oauth2_scheme),
+    current_user: UserModel = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -96,7 +116,9 @@ def get_card(
     :param card_id: the id of the card to get
     :returns: The details of the card.
     """
-    card = card_exists_in_deck(session=session, deck_id=deck_id, card_id=card_id)
+    card = valid_card(
+        session=session, user=current_user, deck_id=deck_id, card_id=card_id
+    )
     return card
 
 
@@ -104,7 +126,7 @@ def get_card(
 def create_card(
     deck_id: UUID,
     card: CardCreate,
-    token: str = Depends(oauth2_scheme),
+    current_user: UserModel = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -114,7 +136,7 @@ def create_card(
     :param card: the details of the new card.
     :returns: The new card
     """
-    deck_exists(session=session, deck_id=deck_id)
+    valid_deck(session=session, user=current_user, deck_id=deck_id)
 
     card_data = card.dict()
     card_data["deck_id"] = deck_id
@@ -156,7 +178,7 @@ def edit_card(
     deck_id: UUID,
     card_id: UUID,
     new_card_data: CardPatch,
-    token: str = Depends(oauth2_scheme),
+    current_user: UserModel = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -167,9 +189,7 @@ def edit_card(
     :param new_card_data: the new details of the card. Can be partial.
     :returns: The modified card
     """
-    original_data = card_exists_in_deck(
-        session=session, deck_id=deck_id, card_id=card_id
-    )
+    original_data = valid_card(session=session, deck_id=deck_id, card_id=card_id)
 
     update_data = new_card_data.dict(exclude_unset=True)
     new_model = CardCreate(**vars(original_data)).copy(update=update_data)
@@ -180,12 +200,32 @@ def edit_card(
     return CardModel.get_one(session=session, object_id=card_id)
 
 
+@router.get("/{deck_id}/cards/{card_id}/reviews", response_model=List[Review])
+def get_reviews(
+    deck_id: UUID,
+    card_id: UUID,
+    current_user: UserModel = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """
+    Get all the reviews done on this card.
+
+    :param deck_id: the id of the deck this card belongs to
+    :param card_id: the id of the card to get the reviews of
+    :returns: The reviews of the card.
+    """
+    card = valid_card(
+        session=session, user=current_user, deck_id=deck_id, card_id=card_id
+    )
+    return card.reviews
+
+
 @router.put("/{deck_id}/cards/{card_id}/tags/{tag_name}", response_model=Card)
 def assign_tag_to_card(
     deck_id: UUID,
     card_id: UUID,
     tag_name: str,
-    token: str = Depends(oauth2_scheme),
+    current_user: UserModel = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -196,7 +236,9 @@ def assign_tag_to_card(
     :param tag_name: the tag to assign to this card
     :returns: The modified card
     """
-    card = card_exists_in_deck(session=session, deck_id=deck_id, card_id=card_id)
+    card = valid_card(
+        session=session, user=current_user, deck_id=deck_id, card_id=card_id
+    )
     tag = TagModel.get_by_name(session=session, name=tag_name)
     if not tag:
         tag = TagModel.create(session=session, name=tag_name)
@@ -208,7 +250,7 @@ def remove_tag_from_card(
     deck_id: UUID,
     card_id: UUID,
     tag_name: str,
-    token: str = Depends(oauth2_scheme),
+    current_user: UserModel = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -219,7 +261,9 @@ def remove_tag_from_card(
     :param tag_name: the tag to remove from this card
     :returns: The modified card
     """
-    card = card_exists_in_deck(session=session, deck_id=deck_id, card_id=card_id)
+    card = valid_card(
+        session=session, user=current_user, deck_id=deck_id, card_id=card_id
+    )
     tag = TagModel.get_by_name(session=session, name=tag_name)
     if not tag:
         raise HTTPException(status_code=404, detail=f"Tag '{tag_name}' doesn't exist.")
@@ -233,7 +277,7 @@ def assign_question_context_to_card(
     deck_id: UUID,
     card_id: UUID,
     fact_id: UUID,
-    token: str = Depends(oauth2_scheme),
+    current_user: UserModel = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -244,7 +288,9 @@ def assign_question_context_to_card(
     :param fact_id: the fact to assign as question context to this card
     :returns: The modified card
     """
-    card = card_exists_in_deck(session=session, deck_id=deck_id, card_id=card_id)
+    card = valid_card(
+        session=session, user=current_user, deck_id=deck_id, card_id=card_id
+    )
     fact = FactModel.get_one(session=session, object_id=fact_id)
     if not fact:
         raise HTTPException(
@@ -260,7 +306,7 @@ def remove_question_context_from_card(
     deck_id: UUID,
     card_id: UUID,
     fact_id: UUID,
-    token: str = Depends(oauth2_scheme),
+    current_user: UserModel = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -271,7 +317,9 @@ def remove_question_context_from_card(
     :param fact_id: the id of the fact to remove from the question context
     :returns: The modified card
     """
-    card = card_exists_in_deck(session=session, deck_id=deck_id, card_id=card_id)
+    card = valid_card(
+        session=session, user=current_user, deck_id=deck_id, card_id=card_id
+    )
     fact = FactModel.get_one(session=session, object_id=fact_id)
     if not fact:
         raise HTTPException(
@@ -285,7 +333,7 @@ def assign_answer_context_to_card(
     deck_id: UUID,
     card_id: UUID,
     fact_id: UUID,
-    token: str = Depends(oauth2_scheme),
+    current_user: UserModel = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -296,7 +344,9 @@ def assign_answer_context_to_card(
     :param fact_id: the fact to assign as answer context to this card
     :returns: The modified card
     """
-    card = card_exists_in_deck(session=session, deck_id=deck_id, card_id=card_id)
+    card = valid_card(
+        session=session, user=current_user, deck_id=deck_id, card_id=card_id
+    )
     fact = FactModel.get_one(session=session, object_id=fact_id)
     if not fact:
         raise HTTPException(
@@ -312,7 +362,7 @@ def remove_answer_context_from_card(
     deck_id: UUID,
     card_id: UUID,
     fact_id: UUID,
-    token: str = Depends(oauth2_scheme),
+    current_user: UserModel = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -323,7 +373,9 @@ def remove_answer_context_from_card(
     :param fact_id: the id of the fact to remove from the answer context
     :returns: The modified card
     """
-    card = card_exists_in_deck(session=session, deck_id=deck_id, card_id=card_id)
+    card = valid_card(
+        session=session, user=current_user, deck_id=deck_id, card_id=card_id
+    )
     fact = FactModel.get_one(session=session, object_id=fact_id)
     if not fact:
         raise HTTPException(
@@ -336,7 +388,7 @@ def remove_answer_context_from_card(
 def delete_card(
     deck_id: UUID,
     card_id: UUID,
-    token: str = Depends(oauth2_scheme),
+    current_user: UserModel = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -346,5 +398,5 @@ def delete_card(
     :param card_id: the id of the card to delete
     :returns: None
     """
-    card_exists_in_deck(session=session, deck_id=deck_id, card_id=card_id)
+    valid_card(session=session, user=current_user, deck_id=deck_id, card_id=card_id)
     CardModel.delete(session=session, object_id=card_id)

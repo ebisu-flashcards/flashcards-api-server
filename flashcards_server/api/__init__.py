@@ -9,7 +9,7 @@ from flashcards_server.constants import (
 )
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
@@ -25,7 +25,7 @@ def get_session() -> Session:
         session.close()
 
 
-from flashcards_server.api.users.models import DeckOwner, User  # noqa: F401, E402
+from flashcards_server.api.auth.models import DeckOwner, User  # noqa: F401, E402
 
 
 SessionLocal = init_db(SQLALCHEMY_DATABASE_URL, SQLALCHEMY_DATABASE_CONNECTION_ARGS)

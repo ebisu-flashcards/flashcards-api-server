@@ -35,7 +35,7 @@ class Fact(FactBase):
 router = APIRouter(
     prefix="/facts",
     tags=["facts"],
-    # dependencies=[Depends(get_token_header)],
+    dependencies=[Depends(oauth2_scheme)],
     responses={404: {"description": "Not found"}},
 )
 
@@ -43,7 +43,6 @@ router = APIRouter(
 @router.get("/{fact_id}", response_model=Fact)
 def get_fact(
     fact_id: UUID,
-    token: str = Depends(oauth2_scheme),
     session: Session = Depends(get_session),
 ):
     """
@@ -65,7 +64,6 @@ def get_fact_by_tag(
     tag_name: str,
     offset: int = 0,
     limit: int = 100,
-    token: str = Depends(oauth2_scheme),
     session: Session = Depends(get_session),
 ):
     """
@@ -87,7 +85,6 @@ def get_fact_by_tag(
 @router.post("/", response_model=Fact)
 def create_fact(
     fact: FactCreate,
-    token: str = Depends(oauth2_scheme),
     session: Session = Depends(get_session),
 ):
     """
@@ -112,7 +109,6 @@ def create_fact(
 def edit_fact(
     fact_id: UUID,
     new_fact_data: FactPatch,
-    token: str = Depends(oauth2_scheme),
     session: Session = Depends(get_session),
 ):
     """
@@ -133,7 +129,6 @@ def edit_fact(
 def assign_tag_to_fact(
     fact_id: UUID,
     tag_name: str,
-    token: str = Depends(oauth2_scheme),
     session: Session = Depends(get_session),
 ):
     """
@@ -155,7 +150,6 @@ def assign_tag_to_fact(
 def remove_tag_from_fact(
     fact_id: UUID,
     tag_name: str,
-    token: str = Depends(oauth2_scheme),
     session: Session = Depends(get_session),
 ):
     """

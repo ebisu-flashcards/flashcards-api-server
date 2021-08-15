@@ -9,13 +9,11 @@ from flashcards_server.api import oauth2_scheme
 router = APIRouter(
     prefix="/algorithms",
     tags=["algorithms"],
-    # dependencies=[Depends(get_token_header)],
+    dependencies=[Depends(oauth2_scheme)],
     responses={404: {"description": "Not found"}},
 )
 
 
 @router.get("/", response_model=List[str])
-def get_algorithms(
-    offset: int = 0, limit: int = 100, token: str = Depends(oauth2_scheme)
-):
+def get_algorithms(offset: int = 0, limit: int = 100):
     return get_available_schedulers()

@@ -1,7 +1,7 @@
 from typing import List
 
-from uuid import uuid4
-from sqlalchemy import Column, String, Boolean, ForeignKey, Table
+from uuid import uuid4, UUID
+from sqlalchemy import Column, String, Boolean, ForeignKey, Table, and_
 from sqlalchemy.orm import Session
 from flashcards_core.guid import GUID
 from flashcards_core.database import Base, Deck
@@ -12,9 +12,8 @@ from flashcards_core.database.crud import CrudOperations
 DeckOwner = Table(
     "deck_owners",
     Base.metadata,
-    Column("id", GUID(), primary_key=True, default=uuid4),
-    Column("deck_id", GUID(), ForeignKey("decks.id"), unique=True),
-    Column("owner_id", GUID(), ForeignKey("users.id")),
+    Column("deck_id", GUID(), ForeignKey("decks.id"), primary_key=True),
+    Column("owner_id", GUID(), ForeignKey("users.id"), nullable=False),
 )
 
 
@@ -80,6 +79,20 @@ class User(Base, CrudOperations):
             for pair in deck_owner_pairs
         ]
 
+    def owns_deck(self, session: Session, deck_id: UUID) -> bool:
+        """
+        Verify that the given deck is owned by this user.
+
+        :param session: the session (see flashcards_core.database:init_session()).
+        :param deck_id: the deck to check the ownership of.
+        :returns: True if the user is the owner of this deck, False otherwise
+        """
+        select = DeckOwner.select().where(
+            and_(DeckOwner.c.owner_id == self.id, DeckOwner.c.deck_id == deck_id)
+        )
+        deck_owner = session.execute(select)
+        return len(list(deck_owner)) > 0
+
     def create_deck(self, session: Session, deck_data: dict):
         """
         Create a new deck and assign it to this user.
@@ -94,7 +107,7 @@ class User(Base, CrudOperations):
         session.refresh(self)
         return new_deck
 
-    def delete_deck(self, session: Session, deck_id: str) -> None:
+    def delete_deck(self, session: Session, deck_id: UUID) -> None:
         """
         Remove the given deck from this user and delete it.
 

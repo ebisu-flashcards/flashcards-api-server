@@ -24,7 +24,7 @@ class Tag(TagBase):
 router = APIRouter(
     prefix="/tags",
     tags=["tags"],
-    # dependencies=[Depends(get_token_header)],
+    dependencies=[Depends(oauth2_scheme)],
     responses={404: {"description": "Not found"}},
 )
 
@@ -33,7 +33,6 @@ router = APIRouter(
 def get_tags(
     offset: int = 0,
     limit: int = 100,
-    token: str = Depends(oauth2_scheme),
     session: Session = Depends(get_session),
 ):
     return TagModel.get_all(session=session, offset=offset, limit=limit)
@@ -42,7 +41,6 @@ def get_tags(
 @router.get("/{tag_name}", response_model=Tag)
 def get_tag(
     tag_name: str,
-    token: str = Depends(oauth2_scheme),
     session: Session = Depends(get_session),
 ):
     db_tag = TagModel.get_by_name(session=session, name=tag_name)
@@ -54,7 +52,6 @@ def get_tag(
 @router.post("/", response_model=Tag)
 def create_tag(
     tag: TagCreate,
-    token: str = Depends(oauth2_scheme),
     session: Session = Depends(get_session),
 ):
     return TagModel.create(session=session, **tag.dict())
@@ -64,7 +61,6 @@ def create_tag(
 def edit_tag(
     tag: TagCreate,
     tag_name: str,
-    token: str = Depends(oauth2_scheme),
     session: Session = Depends(get_session),
 ):
     db_tag = TagModel.get_by_name(session=session, name=tag_name)
@@ -74,7 +70,6 @@ def edit_tag(
 @router.delete("/{tag_name}")
 def delete_tag(
     tag_name: str,
-    token: str = Depends(oauth2_scheme),
     session: Session = Depends(get_session),
 ):
     try:
