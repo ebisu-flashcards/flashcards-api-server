@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from uuid import UUID
 from pydantic import BaseModel
@@ -14,7 +14,6 @@ from flashcards_server.api.auth.functions import (
     authenticate,
     create_access_token,
 )
-from flashcards_server.api.decks import Deck
 from flashcards_server.constants import ACCESS_TOKEN_EXPIRE_MINUTES
 
 
@@ -100,14 +99,6 @@ async def update_my_details(
     return UserModel.update(
         session=session, object_id=current_user.id, **new_user_model.dict()
     )
-
-
-@router.get("/user/decks/", response_model=List[Deck])
-async def get_my_decks(
-    current_user: UserModel = Depends(get_current_user),
-    session: Session = Depends(get_session),
-):
-    return current_user.get_decks(session=session)
 
 
 @router.delete("/user")

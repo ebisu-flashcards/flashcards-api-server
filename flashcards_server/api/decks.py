@@ -67,6 +67,14 @@ router = APIRouter(
 )
 
 
+@router.get("", response_model=List[Deck])
+async def get_my_decks(
+    current_user: UserModel = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    return current_user.get_decks(session=session)
+
+
 @router.get("/{deck_id}", response_model=Deck)
 def get_deck(
     deck_id: UUID,
