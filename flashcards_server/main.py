@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, Request, Response
+from fastapi import FastAPI, Request, Response
 import flashcards_server
 from flashcards_server.constants import DISPLAY_TRACEBACK_ON_500
 
@@ -7,7 +7,8 @@ app = FastAPI(
     title="Flashcards API",
     description="API Docs for flashcards-server",
     version=flashcards_server.__version__,
-    root_path="/flashcards",
+    # root_path="/flashcards",
+    # prefix="/api/v1",
 )
 
 # Import and include all routers
@@ -22,23 +23,17 @@ from flashcards_server.api.token import router as token_router  # noqa: F401, E4
 from flashcards_server.api.users import router as users_router  # noqa: F401, E402
 
 
-main_router = APIRouter(
-    prefix="/api/v1",
-    responses={404: {"description": "Not found"}},
-)
-
-
-main_router.include_router(algorithms_router)
-main_router.include_router(cards_router)
-main_router.include_router(decks_router)
-main_router.include_router(facts_router)
-main_router.include_router(tags_router)
-main_router.include_router(token_router)
-main_router.include_router(users_router)
+app.include_router(algorithms_router)
+app.include_router(cards_router)
+app.include_router(decks_router)
+app.include_router(facts_router)
+app.include_router(tags_router)
+app.include_router(token_router)
+app.include_router(users_router)
 
 
 # Default endpoint
-@main_router.get("/")
+@app.get("/")
 async def root():
     return {"message": "Hello!"}
 
