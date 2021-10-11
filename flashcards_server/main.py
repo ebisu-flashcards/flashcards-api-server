@@ -1,6 +1,18 @@
 from fastapi import FastAPI, Request, Response
+
+# from sqlalchemy.orm import Session
+# from passlib.context import CryptContext
+# from flashcards_core.database import init_db
+
 import flashcards_server
 from flashcards_server.constants import DISPLAY_TRACEBACK_ON_500
+
+# from flashcards_server.auth.cookies import OAuth2PasswordBearerCookie
+# from flashcards_server.constants import (
+#     SQLALCHEMY_DATABASE_URL,
+#     SQLALCHEMY_DATABASE_CONNECTION_ARGS,
+# )
+
 
 # Create the FastAPI app
 app = FastAPI(
@@ -8,6 +20,7 @@ app = FastAPI(
     description="API Docs for flashcards-server",
     version=flashcards_server.__version__,
 )
+
 
 # Import and include all routers
 from flashcards_server.api.auth import router as auth_router  # noqa: F401, E402

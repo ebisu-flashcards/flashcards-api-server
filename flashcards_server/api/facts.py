@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from flashcards_core.database import Fact as FactModel, Tag as TagModel
 
-from flashcards_server.api import get_session, oauth2_scheme
+from flashcards_server import get_session, oauth2_scheme
 from flashcards_server.api.tags import Tag, TagCreate
 
 

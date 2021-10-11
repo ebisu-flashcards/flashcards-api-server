@@ -22,6 +22,9 @@ HASHING_ALGORITHM = "HS256"
 #: How many minutes should the access token last
 ACCESS_TOKEN_EXPIRE_MINUTES = 15
 
+#: The domain name where this app is deployed
+DOMAIN = "localhost"  # FIXME
+
 
 #
 # Development

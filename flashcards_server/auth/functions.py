@@ -6,7 +6,7 @@ from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from flashcards_server.api import get_session, oauth2_scheme, pwd_context
-from flashcards_server.api.auth.models import User as UserModel
+from flashcards_server.auth.models import User as UserModel
 from flashcards_server.constants import (
     SECRET_KEY,
     HASHING_ALGORITHM,

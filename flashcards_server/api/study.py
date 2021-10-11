@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from flashcards_core.schedulers import get_scheduler_for_deck
 
-from flashcards_server.api import oauth2_scheme, get_session
+from flashcards_server import oauth2_scheme, get_session
 from flashcards_server.api.decks import valid_deck
 from flashcards_server.api.cards import Card, valid_card
 from flashcards_server.api.auth import UserModel, get_current_user
