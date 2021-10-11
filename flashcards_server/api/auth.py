@@ -1,37 +1,24 @@
 from typing import Optional
 
+import base64
+import logging
 from uuid import UUID
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from fastapi import Depends, APIRouter, HTTPException, Response
-
-# from fastapi.security import OAuth2PasswordRequestForm
-
-import base64
-
 from fastapi.encoders import jsonable_encoder
 
-# from fastapi.security import OAuth2PasswordRequestForm, OAuth2
-# from fastapi.security.base import SecurityBase
-# from fastapi.security.utils import get_authorization_scheme_param
-# from fastapi.openapi.docs import get_swagger_ui_html
-# from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel
-# from fastapi.openapi.utils import get_openapi
-
-# from starlette.status import HTTP_403_FORBIDDEN
-# from starlette.responses import RedirectResponse, Response, JSONResponse
-# from starlette.requests import Request
-
-
-from flashcards_server import get_session, pwd_context
-from flashcards_server.auth.cookie import BasicAuth
-from flashcards_server.auth.models import User as UserModel
-from flashcards_server.auth.functions import (
+from flashcards_server.database import get_session
+from flashcards_server.auth import (
+    pwd_context,
+    basic_auth,
+    BasicAuth,
     get_current_user,
     create_access_token,
-    authenticate_user,
+    authenticate,
 )
+from flashcards_server.models import User as UserModel
 from flashcards_server.constants import ACCESS_TOKEN_EXPIRE_MINUTES, DOMAIN
 
 
@@ -70,9 +57,6 @@ router = APIRouter(
 )
 
 
-basic_auth = BasicAuth(auto_error=False)
-
-
 @router.post("/register", response_model=User)
 async def create_new_user(
     username: str, email: str, password: str, session: Session = Depends(get_session)
@@ -84,69 +68,40 @@ async def create_new_user(
 
 
 @router.post("/login", response_model=Token)
-async def login_basic(auth: BasicAuth = Depends(basic_auth)):
+async def login_basic(
+    auth: BasicAuth = Depends(basic_auth), session: Session = Depends(get_session)
+):
     if not auth:
         response = Response(headers={"WWW-Authenticate": "Basic"}, status_code=401)
         return response
 
-    try:
-        decoded = base64.b64decode(auth).decode("ascii")
-        username, _, password = decoded.partition(":")
-        user = authenticate_user(username, password)
-        if not user:
-            raise HTTPException(status_code=400, detail="Incorrect credentials")
+    decoded = base64.b64decode(auth).decode("ascii")
+    username, _, password = decoded.partition(":")
+    user = authenticate(username, password, session)
+    if not user:
+        raise HTTPException(status_code=400, detail="Incorrect credentials")
 
+    try:
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(
             data={"sub": username}, expires_delta=access_token_expires
         )
-
         token = jsonable_encoder(access_token)
-
         response = Response({"message": "Logged in"})
         response.set_cookie(
             "Authorization",
             value=f"Bearer {token}",
-            domain="localtest.me",
+            domain=DOMAIN,
             httponly=True,
-            max_age=1800,
-            expires=1800,
+            max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            expires=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         )
         return response
 
-    except Exception:
+    except Exception as e:
+        logging.exception(e)
         response = Response(headers={"WWW-Authenticate": "Basic"}, status_code=401)
         return response
-
-
-# @router.post("/login", response_model=Token)
-# async def login_for_access_token_and_cookie(
-#     form_data: OAuth2PasswordRequestForm = Depends(),
-#     session: Session = Depends(get_session),
-# ):
-#     user = authenticate(
-#         username=form_data.username, password=form_data.password, session=session
-#     )
-#     if not user:
-#         raise HTTPException(
-#             status_code=status.HTTP_401_UNAUTHORIZED,
-#             detail="Incorrect username or password",
-#             headers={"WWW-Authenticate": "Bearer"},
-#         )
-#     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-#     access_token = create_access_token(
-#         data_to_encode={"sub": user.username}, expires_delta=access_token_expires
-#     )
-#     response = Response({"message": "Logged in"})
-#     response.set_cookie(
-#         "Authorization",
-#         value=f"Bearer {access_token}",
-#         domain=DOMAIN,
-#         httponly=True,
-#         max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-#         expires=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-#     )
-#     return response
 
 
 @router.get("/logout")

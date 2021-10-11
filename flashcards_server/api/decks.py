@@ -6,8 +6,9 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from flashcards_core.database import Deck as DeckModel, Tag as TagModel
 
-from flashcards_server import get_session, oauth2_scheme
-from flashcards_server.auth import get_current_user, UserModel
+from flashcards_server.database import get_session
+from flashcards_server.auth import get_current_user, oauth2_scheme
+from flashcards_server.models import User as UserModel
 from flashcards_server.api.tags import Tag, TagCreate
 
 

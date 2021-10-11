@@ -1,6 +1,9 @@
-from flashcards_server.api.auth.cookies import OAuth2PasswordBearerCookie  # noqa: F401
-from flashcards_server.api.auth.models import User as UserModel  # noqa: F401
-from flashcards_server.api.auth.functions import (  # noqa: F401
+from flashcards_server.auth.functions import (  # noqa: F401
     get_current_user,
     authenticate,
+    pwd_context,
+    oauth2_scheme,
+    basic_auth,
+    create_access_token,
 )
+from flashcards_server.auth.cookies import BasicAuth  # noqa: F401

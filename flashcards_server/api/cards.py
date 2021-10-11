@@ -11,11 +11,12 @@ from flashcards_core.database import (
     Fact as FactModel,
 )
 
-from flashcards_server import get_session
+from flashcards_server.database import get_session
 from flashcards_server.api.decks import router, valid_deck
 from flashcards_server.api.facts import Fact
 from flashcards_server.api.tags import Tag, TagCreate
-from flashcards_server.auth import UserModel, get_current_user
+from flashcards_server.auth import get_current_user
+from flashcards_server.models import User as UserModel
 
 
 class CardCreate(BaseModel):

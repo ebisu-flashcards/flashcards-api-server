@@ -2,7 +2,7 @@ from typing import Optional
 
 from fastapi import HTTPException
 from fastapi.security import OAuth2
-from fastapi.security.base import SecurityBase
+from fastapi.security.base import SecurityBase, SecurityBaseModel
 from fastapi.security.utils import get_authorization_scheme_param
 from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel
 
@@ -17,6 +17,7 @@ class BasicAuth(SecurityBase):
 
     def __init__(self, scheme_name: str = None, auto_error: bool = True):
         self.scheme_name = scheme_name or self.__class__.__name__
+        self.model = SecurityBaseModel(type="http")
         self.auto_error = auto_error
 
     async def __call__(self, request: Request) -> Optional[str]:

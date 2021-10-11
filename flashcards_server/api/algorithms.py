@@ -3,7 +3,7 @@ from typing import List
 from fastapi import APIRouter, Depends
 from flashcards_core.schedulers import get_available_schedulers
 
-from flashcards_server import oauth2_scheme
+from flashcards_server.auth import oauth2_scheme
 
 
 router = APIRouter(

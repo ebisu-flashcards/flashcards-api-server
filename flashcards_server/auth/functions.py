@@ -4,19 +4,24 @@ from datetime import timedelta, datetime
 from jose import jwt, JWTError
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from passlib.context import CryptContext
 
-from flashcards_server.api import get_session, oauth2_scheme, pwd_context
-from flashcards_server.auth.models import User as UserModel
+from flashcards_server.database import get_session
+from flashcards_server.models import User as UserModel
 from flashcards_server.constants import (
     SECRET_KEY,
     HASHING_ALGORITHM,
     ACCESS_TOKEN_EXPIRE_MINUTES,
 )
+from flashcards_server.auth.cookies import OAuth2PasswordBearerCookie, BasicAuth
 
 
-def authenticate(
-    username: str, password: str, session: Session = Depends(get_session)
-) -> Optional[UserModel]:
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearerCookie(tokenUrl="/auth/login")
+basic_auth = BasicAuth(auto_error=False)
+
+
+def authenticate(username: str, password: str, session: Session) -> Optional[UserModel]:
     """
     Given username and password, returns the user that matches, or None.
     Returns None also if the user exists, but is disabled.

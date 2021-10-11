@@ -5,7 +5,8 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from flashcards_core.database import Tag as TagModel
 
-from flashcards_server import get_session, oauth2_scheme
+from flashcards_server.database import get_session
+from flashcards_server.auth import oauth2_scheme
 
 
 class TagBase(BaseModel):
