@@ -15,7 +15,7 @@ from flashcards_server.database import get_session
 from flashcards_server.api.decks import router, valid_deck
 from flashcards_server.api.facts import Fact
 from flashcards_server.api.tags import Tag, TagCreate
-from flashcards_server.auth import get_current_user
+from flashcards_server.users import current_active_user
 from flashcards_server.models import User as UserModel
 
 
@@ -81,7 +81,7 @@ def get_cards(
     deck_id: UUID,
     offset: int = 0,
     limit: int = 100,
-    current_user: UserModel = Depends(get_current_user),
+    current_user: UserModel = Depends(current_active_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -107,7 +107,7 @@ def get_cards(
 def get_card(
     deck_id: UUID,
     card_id: UUID,
-    current_user: UserModel = Depends(get_current_user),
+    current_user: UserModel = Depends(current_active_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -127,7 +127,7 @@ def get_card(
 def create_card(
     deck_id: UUID,
     card: CardCreate,
-    current_user: UserModel = Depends(get_current_user),
+    current_user: UserModel = Depends(current_active_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -179,7 +179,7 @@ def edit_card(
     deck_id: UUID,
     card_id: UUID,
     new_card_data: CardPatch,
-    current_user: UserModel = Depends(get_current_user),
+    current_user: UserModel = Depends(current_active_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -205,7 +205,7 @@ def edit_card(
 def get_reviews(
     deck_id: UUID,
     card_id: UUID,
-    current_user: UserModel = Depends(get_current_user),
+    current_user: UserModel = Depends(current_active_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -226,7 +226,7 @@ def assign_tag_to_card(
     deck_id: UUID,
     card_id: UUID,
     tag_name: str,
-    current_user: UserModel = Depends(get_current_user),
+    current_user: UserModel = Depends(current_active_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -251,7 +251,7 @@ def remove_tag_from_card(
     deck_id: UUID,
     card_id: UUID,
     tag_name: str,
-    current_user: UserModel = Depends(get_current_user),
+    current_user: UserModel = Depends(current_active_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -278,7 +278,7 @@ def assign_question_context_to_card(
     deck_id: UUID,
     card_id: UUID,
     fact_id: UUID,
-    current_user: UserModel = Depends(get_current_user),
+    current_user: UserModel = Depends(current_active_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -307,7 +307,7 @@ def remove_question_context_from_card(
     deck_id: UUID,
     card_id: UUID,
     fact_id: UUID,
-    current_user: UserModel = Depends(get_current_user),
+    current_user: UserModel = Depends(current_active_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -334,7 +334,7 @@ def assign_answer_context_to_card(
     deck_id: UUID,
     card_id: UUID,
     fact_id: UUID,
-    current_user: UserModel = Depends(get_current_user),
+    current_user: UserModel = Depends(current_active_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -363,7 +363,7 @@ def remove_answer_context_from_card(
     deck_id: UUID,
     card_id: UUID,
     fact_id: UUID,
-    current_user: UserModel = Depends(get_current_user),
+    current_user: UserModel = Depends(current_active_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -389,7 +389,7 @@ def remove_answer_context_from_card(
 def delete_card(
     deck_id: UUID,
     card_id: UUID,
-    current_user: UserModel = Depends(get_current_user),
+    current_user: UserModel = Depends(current_active_user),
     session: Session = Depends(get_session),
 ):
     """

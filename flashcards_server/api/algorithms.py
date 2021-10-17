@@ -1,15 +1,13 @@
 from typing import List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter  # , Depends
 from flashcards_core.schedulers import get_available_schedulers
-
-from flashcards_server.auth import oauth2_scheme
 
 
 router = APIRouter(
     prefix="/algorithms",
     tags=["algorithms"],
-    dependencies=[Depends(oauth2_scheme)],
+    # dependencies=[Depends(oauth2_scheme)],
     responses={404: {"description": "Not found"}},
 )
 

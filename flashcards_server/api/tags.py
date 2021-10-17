@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 from flashcards_core.database import Tag as TagModel
 
 from flashcards_server.database import get_session
-from flashcards_server.auth import oauth2_scheme
 
 
 class TagBase(BaseModel):
@@ -25,7 +24,7 @@ class Tag(TagBase):
 router = APIRouter(
     prefix="/tags",
     tags=["tags"],
-    dependencies=[Depends(oauth2_scheme)],
+    # dependencies=[Depends(oauth2_scheme)],
     responses={404: {"description": "Not found"}},
 )
 

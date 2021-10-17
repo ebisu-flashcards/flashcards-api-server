@@ -7,10 +7,11 @@ from pydantic import BaseModel
 from flashcards_core.schedulers import get_scheduler_for_deck
 
 from flashcards_server.database import get_session
-from flashcards_server.auth import oauth2_scheme
+
+# from flashcards_server.auth import oauth2_scheme
 from flashcards_server.api.decks import valid_deck
 from flashcards_server.api.cards import Card, valid_card
-from flashcards_server.api.auth import get_current_user
+from flashcards_server.users import current_active_user
 from flashcards_server.models import User as UserModel
 
 
@@ -22,7 +23,7 @@ class TestData(BaseModel):
 router = APIRouter(
     prefix="/study",
     tags=["study"],
-    dependencies=[Depends(oauth2_scheme)],
+    # dependencies=[Depends(oauth2_scheme)],
     responses={404: {"description": "Not found"}},
 )
 
@@ -30,7 +31,7 @@ router = APIRouter(
 @router.get("/{deck_id}/start", response_model=Card)
 def first_card(
     deck_id: UUID,
-    current_user: UserModel = Depends(get_current_user),
+    current_user: UserModel = Depends(current_active_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -48,7 +49,7 @@ def first_card(
 def next_card(
     deck_id: UUID,
     test_data: TestData,
-    current_user: UserModel = Depends(get_current_user),
+    current_user: UserModel = Depends(current_active_user),
     session: Session = Depends(get_session),
 ):
     """

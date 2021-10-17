@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from flashcards_core.database import Deck as DeckModel, Tag as TagModel
 
 from flashcards_server.database import get_session
-from flashcards_server.auth import get_current_user, oauth2_scheme
+from flashcards_server.users import current_active_user
 from flashcards_server.models import User as UserModel
 from flashcards_server.api.tags import Tag, TagCreate
 
@@ -63,14 +63,14 @@ def valid_deck(
 router = APIRouter(
     prefix="/decks",
     tags=["decks"],
-    dependencies=[Depends(oauth2_scheme)],
+    # dependencies=[Depends(oauth2_scheme)],
     responses={404: {"description": "Not found"}},
 )
 
 
 @router.get("", response_model=List[Deck])
 async def get_my_decks(
-    current_user: UserModel = Depends(get_current_user),
+    current_user: UserModel = Depends(current_active_user),
     session: Session = Depends(get_session),
 ):
     return current_user.get_decks(session=session)
@@ -79,7 +79,7 @@ async def get_my_decks(
 @router.get("/{deck_id}", response_model=Deck)
 def get_deck(
     deck_id: UUID,
-    current_user: UserModel = Depends(get_current_user),
+    current_user: UserModel = Depends(current_active_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -94,7 +94,7 @@ def get_deck(
 @router.post("/", response_model=Deck)
 def create_deck(
     deck: DeckCreate,
-    current_user: UserModel = Depends(get_current_user),
+    current_user: UserModel = Depends(current_active_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -121,7 +121,7 @@ def create_deck(
 def edit_deck(
     deck_id: UUID,
     new_deck_data: DeckPatch,
-    current_user: UserModel = Depends(get_current_user),
+    current_user: UserModel = Depends(current_active_user),
     session: Session = Depends(get_session),
 ):
     """
@@ -154,7 +154,7 @@ def edit_deck(
 @router.delete("/{deck_id}")
 def delete_deck(
     deck_id: UUID,
-    current_user: UserModel = Depends(get_current_user),
+    current_user: UserModel = Depends(current_active_user),
     session: Session = Depends(get_session),
 ):
     """
