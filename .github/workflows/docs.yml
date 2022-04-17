@@ -33,17 +33,14 @@ jobs:
         
         cd docs/
         make html
-        mkdir redoc
-        cd redoc
-        generate-redoc
-        cd ../
-
+        
         git checkout gh-pages
         cd ../
+        generate-redoc
         mv docs/build/html/* .
         mv _static/ ._static/
         shopt -s extglob
-        rm -rf !(README.md|*.html|*.js)
+        rm -rf !(README.md|*.html|*.js|*.json)
         mv ._static/ _static/
 
         git add .
