@@ -29,11 +29,3 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 15
 
 #: The domain name where this app is deployed
 DOMAIN = "localhost"  # FIXME
-
-
-#
-# Development
-#
-
-#: Return 200 with a stacktrace instead of 500
-DISPLAY_TRACEBACK_ON_500 = bool(os.getenv("FLASHCARDS_STACKTRACE_IN_RESPONSE", False))

@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from flashcards_core.database import Deck as DeckModel, Tag as TagModel
 
-from flashcards_server.database import get_session
+from flashcards_server.database import get_async_session
 from flashcards_server.users import current_active_user
 from flashcards_server.models import User as UserModel
 from flashcards_server.api.tags import Tag, TagCreate
@@ -43,7 +43,7 @@ class Deck(DeckBase):
 def valid_deck(
     deck_id: UUID,
     user: UserModel,
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_async_session),
 ) -> DeckModel:
     """
     Check that the deck actually exists and belongs to the current user.
@@ -71,7 +71,7 @@ router = APIRouter(
 @router.get("", response_model=List[Deck])
 async def get_my_decks(
     current_user: UserModel = Depends(current_active_user),
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_async_session),
 ):
     return current_user.get_decks(session=session)
 
@@ -80,7 +80,7 @@ async def get_my_decks(
 def get_deck(
     deck_id: UUID,
     current_user: UserModel = Depends(current_active_user),
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_async_session),
 ):
     """
     Get all the details of a deck.
@@ -95,7 +95,7 @@ def get_deck(
 def create_deck(
     deck: DeckCreate,
     current_user: UserModel = Depends(current_active_user),
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_async_session),
 ):
     """
     Creates a new deck with the given data.
@@ -122,7 +122,7 @@ def edit_deck(
     deck_id: UUID,
     new_deck_data: DeckPatch,
     current_user: UserModel = Depends(current_active_user),
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_async_session),
 ):
     """
     Edits the details of the given deck
@@ -155,7 +155,7 @@ def edit_deck(
 def delete_deck(
     deck_id: UUID,
     current_user: UserModel = Depends(current_active_user),
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_async_session),
 ):
     """
     Removes the given deck

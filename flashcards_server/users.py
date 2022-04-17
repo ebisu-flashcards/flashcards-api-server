@@ -2,18 +2,23 @@ from typing import Optional
 
 from fastapi import Depends, Request
 from fastapi_users import BaseUserManager, FastAPIUsers
-from fastapi_users.authentication import CookieAuthentication
+from fastapi_users.authentication import (
+    AuthenticationBackend,
+    BearerTransport,
+    JWTStrategy,
+)
 from fastapi_users.db import SQLAlchemyUserDatabase
 
 from flashcards_server.database import get_user_db
 from flashcards_server.models import User, UserCreate, UserDB, UserUpdate
-from flashcards_server.constants import SECRET_KEY
+
+SECRET = "SECRET"
 
 
 class UserManager(BaseUserManager[UserCreate, UserDB]):
     user_db_model = UserDB
-    reset_password_token_secret = SECRET_KEY
-    verification_token_secret = SECRET_KEY
+    reset_password_token_secret = SECRET
+    verification_token_secret = SECRET
 
     async def on_after_register(self, user: UserDB, request: Optional[Request] = None):
         print(f"User {user.id} has registered.")
@@ -29,21 +34,29 @@ class UserManager(BaseUserManager[UserCreate, UserDB]):
         print(f"Verification requested for user {user.id}. Verification token: {token}")
 
 
-def get_user_manager(user_db: SQLAlchemyUserDatabase = Depends(get_user_db)):
+async def get_user_manager(user_db: SQLAlchemyUserDatabase = Depends(get_user_db)):
     yield UserManager(user_db)
 
 
-cookie_authentication = CookieAuthentication(
-    cookie_name="flashcards", secret=SECRET_KEY, lifetime_seconds=3600
-)
+bearer_transport = BearerTransport(tokenUrl="auth/jwt/login")
 
-users = FastAPIUsers(
+
+def get_jwt_strategy() -> JWTStrategy:
+    return JWTStrategy(secret=SECRET, lifetime_seconds=3600)
+
+
+auth_backend = AuthenticationBackend(
+    name="jwt",
+    transport=bearer_transport,
+    get_strategy=get_jwt_strategy,
+)
+fastapi_users = FastAPIUsers(
     get_user_manager,
-    [cookie_authentication],
+    [auth_backend],
     User,
     UserCreate,
     UserUpdate,
     UserDB,
 )
 
-current_active_user = users.current_user(active=True)
+current_active_user = fastapi_users.current_user(active=True)

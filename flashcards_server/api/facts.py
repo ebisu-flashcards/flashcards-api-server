@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from flashcards_core.database import Fact as FactModel, Tag as TagModel
 
-from flashcards_server.database import get_session
+from flashcards_server.database import get_async_session
 from flashcards_server.api.tags import Tag, TagCreate
 
 
@@ -43,7 +43,7 @@ router = APIRouter(
 @router.get("/{fact_id}", response_model=Fact)
 def get_fact(
     fact_id: UUID,
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_async_session),
 ):
     """
     Get all the details of one fact.
@@ -64,7 +64,7 @@ def get_fact_by_tag(
     tag_name: str,
     offset: int = 0,
     limit: int = 100,
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_async_session),
 ):
     """
     Get all the details of the facts which have this tag assigned.
@@ -85,7 +85,7 @@ def get_fact_by_tag(
 @router.post("/", response_model=Fact)
 def create_fact(
     fact: FactCreate,
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_async_session),
 ):
     """
     Creates a new fact with the given data.
@@ -109,7 +109,7 @@ def create_fact(
 def edit_fact(
     fact_id: UUID,
     new_fact_data: FactPatch,
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_async_session),
 ):
     """
     Edits the details of the given fact
@@ -129,7 +129,7 @@ def edit_fact(
 def assign_tag_to_fact(
     fact_id: UUID,
     tag_name: str,
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_async_session),
 ):
     """
     Assign this tag to the fact.
@@ -150,7 +150,7 @@ def assign_tag_to_fact(
 def remove_tag_from_fact(
     fact_id: UUID,
     tag_name: str,
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_async_session),
 ):
     """
     Remove this tag from the fact.

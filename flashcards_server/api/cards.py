@@ -11,7 +11,7 @@ from flashcards_core.database import (
     Fact as FactModel,
 )
 
-from flashcards_server.database import get_session
+from flashcards_server.database import get_async_session
 from flashcards_server.api.decks import router, valid_deck
 from flashcards_server.api.facts import Fact
 from flashcards_server.api.tags import Tag, TagCreate
@@ -82,7 +82,7 @@ def get_cards(
     offset: int = 0,
     limit: int = 100,
     current_user: UserModel = Depends(current_active_user),
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_async_session),
 ):
     """
     Get all the cards for a deck (paginated, if needed).
@@ -108,7 +108,7 @@ def get_card(
     deck_id: UUID,
     card_id: UUID,
     current_user: UserModel = Depends(current_active_user),
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_async_session),
 ):
     """
     Get all the details of one card.
@@ -128,7 +128,7 @@ def create_card(
     deck_id: UUID,
     card: CardCreate,
     current_user: UserModel = Depends(current_active_user),
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_async_session),
 ):
     """
     Creates a new card with the given data.
@@ -180,7 +180,7 @@ def edit_card(
     card_id: UUID,
     new_card_data: CardPatch,
     current_user: UserModel = Depends(current_active_user),
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_async_session),
 ):
     """
     Edits the details of the given card
@@ -206,7 +206,7 @@ def get_reviews(
     deck_id: UUID,
     card_id: UUID,
     current_user: UserModel = Depends(current_active_user),
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_async_session),
 ):
     """
     Get all the reviews done on this card.
@@ -227,7 +227,7 @@ def assign_tag_to_card(
     card_id: UUID,
     tag_name: str,
     current_user: UserModel = Depends(current_active_user),
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_async_session),
 ):
     """
     Assign this tag to the card.
@@ -252,7 +252,7 @@ def remove_tag_from_card(
     card_id: UUID,
     tag_name: str,
     current_user: UserModel = Depends(current_active_user),
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_async_session),
 ):
     """
     Remove this tag from the card.
@@ -279,7 +279,7 @@ def assign_question_context_to_card(
     card_id: UUID,
     fact_id: UUID,
     current_user: UserModel = Depends(current_active_user),
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_async_session),
 ):
     """
     Assign this fact as a context for the question of the card.
@@ -308,7 +308,7 @@ def remove_question_context_from_card(
     card_id: UUID,
     fact_id: UUID,
     current_user: UserModel = Depends(current_active_user),
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_async_session),
 ):
     """
     Remove this fact from the question context of the card.
@@ -335,7 +335,7 @@ def assign_answer_context_to_card(
     card_id: UUID,
     fact_id: UUID,
     current_user: UserModel = Depends(current_active_user),
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_async_session),
 ):
     """
     Assign this fact as a context for the answer of the card.
@@ -364,7 +364,7 @@ def remove_answer_context_from_card(
     card_id: UUID,
     fact_id: UUID,
     current_user: UserModel = Depends(current_active_user),
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_async_session),
 ):
     """
     Remove this fact from the answer context of the card.
@@ -390,7 +390,7 @@ def delete_card(
     deck_id: UUID,
     card_id: UUID,
     current_user: UserModel = Depends(current_active_user),
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_async_session),
 ):
     """
     Removes the given card from this deck

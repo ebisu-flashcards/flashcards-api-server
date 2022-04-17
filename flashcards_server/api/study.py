@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from flashcards_core.schedulers import get_scheduler_for_deck
 
-from flashcards_server.database import get_session
+from flashcards_server.database import get_async_session
 
 # from flashcards_server.auth import oauth2_scheme
 from flashcards_server.api.decks import valid_deck
@@ -32,7 +32,7 @@ router = APIRouter(
 def first_card(
     deck_id: UUID,
     current_user: UserModel = Depends(current_active_user),
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_async_session),
 ):
     """
     Get the first card to study.
@@ -50,7 +50,7 @@ def next_card(
     deck_id: UUID,
     test_data: TestData,
     current_user: UserModel = Depends(current_active_user),
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_async_session),
 ):
     """
     Processes the result of the previous test and returns the
