@@ -33,10 +33,11 @@ jobs:
         
         cd docs/
         make html
-        
-        git checkout gh-pages
         cd ../
         generate-redoc
+        
+        git checkout gh-pages
+        
         mv docs/build/html/* .
         mv _static/ ._static/
         shopt -s extglob
