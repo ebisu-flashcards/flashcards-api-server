@@ -1,4 +1,4 @@
-name: Docs and ReDoc
+name: Docs
  
 on:
   push:
@@ -9,23 +9,43 @@ on:
       - main
  
 jobs:
- 
-  build_docs:
+  docs:
     runs-on: ubuntu-latest
- 
     steps:
-    - name: Prerequisites
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Checkout files
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+      
+    - name: Install Python
+      uses: actions/setup-python@v2
+
+    - name: Install prerequisites
+      run: pip install -e .[dev]
+      
+    - name: Build & Deploy Docs
+      shell: bash
       run: |
-        git clone "https://token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" .
-        sudo chmod +x .github/workflows/build_docs_and_redoc.sh
-        pip install --editable git+https://github.com/ebisu-flashcards/flashcards-core.git#egg=flashcards_core
-        pip install --editable .[dev]
-      shell: bash
- 
-    - name: Build ReDoc and update Pages
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: ".github/workflows/build_docs_and_redoc.sh"
-      shell: bash
+        git status
+        git config --local user.email "github-actions-bot@users.noreply.github.com"
+        git config --local user.name "Github Actions Bot"
+        
+        cd docs/
+        make html
+        mkdir redoc
+        cd redoc
+        generate-redoc
+        cd ../
+
+        git checkout gh-pages
+        cd ../
+        mv docs/build/html/* .
+        mv _static/ ._static/
+        shopt -s extglob
+        rm -rf !(README.md|*.html|*.js)
+        mv ._static/ _static/
+
+        git add .
+        git commit -m "Update docs for commit ${GITHUB_SHA}"
+        git push

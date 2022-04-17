@@ -1,5 +1,5 @@
 import json
-from flashcards_server.main import app
+from flashcards_server.app import app
 
 
 HTML_TEMPLATE = """

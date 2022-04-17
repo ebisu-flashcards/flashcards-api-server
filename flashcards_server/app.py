@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 
-from flashcards_server import __version__
-from flashcards_server.constants import DISPLAY_TRACEBACK_ON_500
+#from flashcards_server import __version__
 from flashcards_server.database import create_db_and_tables
 from flashcards_server.users import auth_backend, fastapi_users
 
@@ -10,7 +9,7 @@ from flashcards_server.users import auth_backend, fastapi_users
 app = FastAPI(
     title="Flashcards API",
     description="API Docs for flashcards-server",
-    version=__version__,
+    version="__version__",
 )
 
 
