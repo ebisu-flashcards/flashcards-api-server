@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flashcards API Server - WIP &mdash; flashcards-server 0.0.1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="#" class="icon icon-home"> flashcards-server
+            <img src="_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">Flashcards API Server - WIP</a><ul>
+<li><a class="reference internal" href="#setup-with-docker">Setup with Docker</a></li>
+<li><a class="reference internal" href="#openapi-docs">OpenAPI Docs</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#contribute">Contribute</a></li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">flashcards-server</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home"></a> &raquo;</li>
+      <li>Flashcards API Server - WIP</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="flashcards-api-server-wip">
+<h1>Flashcards API Server - WIP<a class="headerlink" href="#flashcards-api-server-wip" title="Permalink to this headline"></a></h1>
+<a class="reference external image-reference" href="https://github.com/ebisu-flashcards/flashcards-api/actions/workflows/tests.yml"><img alt="Unit Tests" src="https://github.com/ebisu-flashcards/flashcards-api/actions/workflows/tests.yml/badge.svg" /></a>
+<a class="reference external image-reference" href="https://coveralls.io/github/ebisu-flashcards/flashcards-api"><img alt="Coverage Status" src="https://coveralls.io/repos/github/ebisu-flashcards/flashcards-api/badge.svg" /></a>
+<a class="reference external image-reference" href="https://www.gnu.org/licenses/agpl-3.0"><img alt="License: AGPL v3" src="https://img.shields.io/badge/License-AGPLv3-blue.svg" /></a>
+<a class="reference external image-reference" href="https://github.com/ebisu-flashcards/flashcards-server"><img alt="Code on: GitHub" src="https://img.shields.io/badge/Code%20on-GitHub-blueviolet" /></a>
+<a class="reference external image-reference" href="https://github.com/psf/black"><img alt="Code style: Black" src="https://img.shields.io/badge/code%20style-black-000000.svg" /></a>
+<p>Flashcards REST API server.</p>
+<p><strong>NOTE</strong>: This is a work-in-progress, not running application.
+Do not expect it to just download it and be able to run it if you’re not
+familiar with Python.</p>
+<section id="setup-with-docker">
+<h2>Setup with Docker<a class="headerlink" href="#setup-with-docker" title="Permalink to this headline"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt; git clone https://github.com/ebisu-flashcards/flashcards-server
+&gt; <span class="nb">cd</span> flashcards_server/
+&gt; docker build -t flashcards .
+&gt; docker run --name flashcards-container -p <span class="m">8000</span>:8000 -d --rm flashcards
+</pre></div>
+</div>
+</section>
+<section id="openapi-docs">
+<h2>OpenAPI Docs<a class="headerlink" href="#openapi-docs" title="Permalink to this headline"></a></h2>
+<p>Visit either <code class="docutils literal notranslate"><span class="pre">127.0.0.1:8000/docs</span></code> or <code class="docutils literal notranslate"><span class="pre">127.0.0.1:8000/redoc</span></code>.</p>
+<p>You can also see the API docs at <a class="reference external" href="https://ebisu-flashcards.github.io/flashcards-server/redoc">https://ebisu-flashcards.github.io/flashcards-server/redoc</a>.</p>
+</section>
+</section>
+<section id="contribute">
+<h1>Contribute<a class="headerlink" href="#contribute" title="Permalink to this headline"></a></h1>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt; python3 -m venv venv
+&gt; <span class="nb">source</span> venv/bin/activate
+&gt; pip install -e git+https://github.com/ebisu-flashcards/flashcards-core.git#egg<span class="o">=</span>flashcards_core
+&gt; pip install -e .<span class="o">[</span>dev<span class="o">]</span>
+&gt; pre-commit install
+&gt; uvicorn flashcards_server.main:app --reload
+INFO:     Started server process <span class="o">[</span>XXXX<span class="o">]</span>
+INFO:     Waiting <span class="k">for</span> application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 <span class="o">(</span>Press CTRL+C to quit<span class="o">)</span>
+INFO:     <span class="m">127</span>.0.0.1:60494 - <span class="s2">&quot;GET / HTTP/1.1&quot;</span> <span class="m">200</span> OK
+
+... <span class="k">do</span> some changes ...
+
+&gt; pytest
+</pre></div>
+</div>
+<p>The pre-commit hook runs Black and Flake8 with fairly standard setups. Do not send a PR if these checks, or the tests, are failing.</p>
+<hr class="docutils" />
+<div class="toctree-wrapper compound">
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Sara Zanzottera.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
