@@ -1,15 +1,14 @@
-FROM tiangolo/uvicorn-gunicorn-fastapi:python3.8
+FROM python:3.9
 
-ENV PORT="8000"
-ENV MODULE_NAME="flashcards_server.main"
+WORKDIR /flashcards
 
 RUN apt install git
 RUN pip install --upgrade pip
-RUN pip install git+https://github.com/ebisu-flashcards/flashcards-core.git
 
-RUN git clone https://github.com/ebisu-flashcards/flashcards-server.git ./temp
-RUN cp -r ./temp/* /app
+COPY ./flashcards_server /flashcards/flashcards_server
+COPY ./setup.cfg         /flashcards/flashcards_server
+COPY ./pyproject.toml    /flashcards/flashcards_server
 
-RUN pip install /app
+RUN pip install --no-cache-dir --upgrade /flashcards/flashcards_server
 
-RUN pip freeze
+CMD ["uvicorn", "flashcards_server.app:app", "--host", "0.0.0.0", "--port", "80"]

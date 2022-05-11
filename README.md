@@ -28,10 +28,9 @@ You can also see the API docs at https://ebisu-flashcards.github.io/flashcards-s
 ```bash
 > python3 -m venv venv
 > source venv/bin/activate
-> pip install -e git+https://github.com/ebisu-flashcards/flashcards-core.git#egg=flashcards_core
 > pip install -e .[dev]
 > pre-commit install
-> uvicorn flashcards_server.main:app --reload
+> uvicorn flashcards_server.app:app --reload   # or python flashcards_server/main.py
 INFO:     Started server process [XXXX]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
