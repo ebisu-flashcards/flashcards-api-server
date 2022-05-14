@@ -100,10 +100,9 @@ familiar with Python.</p>
 <h1>Contribute<a class="headerlink" href="#contribute" title="Permalink to this headline"></a></h1>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt; python3 -m venv venv
 &gt; <span class="nb">source</span> venv/bin/activate
-&gt; pip install -e git+https://github.com/ebisu-flashcards/flashcards-core.git#egg<span class="o">=</span>flashcards_core
 &gt; pip install -e .<span class="o">[</span>dev<span class="o">]</span>
 &gt; pre-commit install
-&gt; uvicorn flashcards_server.main:app --reload
+&gt; uvicorn flashcards_server.app:app --reload   <span class="c1"># or python flashcards_server/main.py</span>
 INFO:     Started server process <span class="o">[</span>XXXX<span class="o">]</span>
 INFO:     Waiting <span class="k">for</span> application startup.
 INFO:     Application startup complete.
