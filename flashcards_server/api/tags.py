@@ -16,7 +16,7 @@ class TagCreate(TagBase):
     pass
 
 
-class Tag(TagBase):
+class TagRead(TagBase):
     class Config:
         orm_mode = True
 
@@ -29,7 +29,7 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=List[Tag])
+@router.get("/", response_model=List[TagRead])
 def get_tags(
     offset: int = 0,
     limit: int = 100,
@@ -38,7 +38,7 @@ def get_tags(
     return TagModel.get_all(session=session, offset=offset, limit=limit)
 
 
-@router.get("/{tag_name}", response_model=Tag)
+@router.get("/{tag_name}", response_model=TagRead)
 def get_tag(
     tag_name: str,
     session: Session = Depends(get_async_session),
@@ -49,7 +49,7 @@ def get_tag(
     return db_tag
 
 
-@router.post("/", response_model=Tag)
+@router.post("/", response_model=TagRead)
 def create_tag(
     tag: TagCreate,
     session: Session = Depends(get_async_session),
@@ -57,7 +57,7 @@ def create_tag(
     return TagModel.create(session=session, **tag.dict())
 
 
-@router.patch("/{tag_name}", response_model=Tag)
+@router.patch("/{tag_name}", response_model=TagRead)
 def edit_tag(
     tag: TagCreate,
     tag_name: str,

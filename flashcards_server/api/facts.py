@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from flashcards_core.database import Fact as FactModel, Tag as TagModel
 
 from flashcards_server.database import get_async_session
-from flashcards_server.api.tags import Tag, TagCreate
+from flashcards_server.api.tags import TagRead, TagCreate
 
 
 class FactBase(BaseModel):
@@ -24,9 +24,9 @@ class FactPatch(BaseModel):
     format: Optional[str]
 
 
-class Fact(FactBase):
+class FactRead(FactBase):
     id: UUID
-    tags: List[Tag]
+    tags: List[TagRead]
 
     class Config:
         orm_mode = True
@@ -40,7 +40,7 @@ router = APIRouter(
 )
 
 
-@router.get("/{fact_id}", response_model=Fact)
+@router.get("/{fact_id}", response_model=FactRead)
 def get_fact(
     fact_id: UUID,
     session: Session = Depends(get_async_session),
@@ -59,7 +59,7 @@ def get_fact(
     return db_fact
 
 
-@router.get("/tag/{tag_name}", response_model=List[Fact])
+@router.get("/tag/{tag_name}", response_model=List[FactRead])
 def get_fact_by_tag(
     tag_name: str,
     offset: int = 0,
@@ -82,7 +82,7 @@ def get_fact_by_tag(
     return db_facts
 
 
-@router.post("/", response_model=Fact)
+@router.post("/", response_model=FactRead)
 def create_fact(
     fact: FactCreate,
     session: Session = Depends(get_async_session),
@@ -105,7 +105,7 @@ def create_fact(
     return new_fact
 
 
-@router.patch("/{fact_id}", response_model=Fact)
+@router.patch("/{fact_id}", response_model=FactRead)
 def edit_fact(
     fact_id: UUID,
     new_fact_data: FactPatch,
@@ -125,7 +125,7 @@ def edit_fact(
     return new_fact
 
 
-@router.put("/{fact_id}/tags/{tag_name}", response_model=Fact)
+@router.put("/{fact_id}/tags/{tag_name}", response_model=FactRead)
 def assign_tag_to_fact(
     fact_id: UUID,
     tag_name: str,
@@ -146,7 +146,7 @@ def assign_tag_to_fact(
     return fact
 
 
-@router.delete("/{fact_id}/tags/{tag_name}", response_model=Fact)
+@router.delete("/{fact_id}/tags/{tag_name}", response_model=FactRead)
 def remove_tag_from_fact(
     fact_id: UUID,
     tag_name: str,

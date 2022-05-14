@@ -13,10 +13,10 @@ from flashcards_core.database import (
 
 from flashcards_server.database import get_async_session
 from flashcards_server.api.decks import router, valid_deck
-from flashcards_server.api.facts import Fact
-from flashcards_server.api.tags import Tag, TagCreate
+from flashcards_server.api.facts import FactRead
+from flashcards_server.api.tags import TagRead, TagCreate
 from flashcards_server.users import current_active_user
-from flashcards_server.models import User as UserModel
+from flashcards_server.schemas import UserRead
 
 
 class CardCreate(BaseModel):
@@ -32,14 +32,14 @@ class CardPatch(BaseModel):
     answer_id: Optional[UUID]
 
 
-class Card(BaseModel):
+class CardRead(BaseModel):
     id: UUID
     deck_id: UUID
-    question: Fact
-    answer: Fact
-    question_context_facts: List[Fact]
-    answer_context_facts: List[Fact]
-    tags: List[Tag]
+    question: FactRead
+    answer: FactRead
+    question_context_facts: List[FactRead]
+    answer_context_facts: List[FactRead]
+    tags: List[TagRead]
 
     class Config:
         orm_mode = True
@@ -57,7 +57,7 @@ class Review(BaseModel):
 
 
 def valid_card(
-    session: Session, user: UserModel, deck_id: UUID, card_id: UUID
+    session: Session, user: UserRead, deck_id: UUID, card_id: UUID
 ) -> CardModel:
     """
     Check that the card actually exists and belongs to the given (valid) deck.
@@ -76,12 +76,12 @@ def valid_card(
     return card
 
 
-@router.get("/{deck_id}/cards", response_model=List[Card])
+@router.get("/{deck_id}/cards", response_model=List[CardRead])
 def get_cards(
     deck_id: UUID,
     offset: int = 0,
     limit: int = 100,
-    current_user: UserModel = Depends(current_active_user),
+    current_user: UserRead = Depends(current_active_user),
     session: Session = Depends(get_async_session),
 ):
     """
@@ -103,11 +103,11 @@ def get_cards(
     return db_cards
 
 
-@router.get("/{deck_id}/cards/{card_id}", response_model=Card)
+@router.get("/{deck_id}/cards/{card_id}", response_model=CardRead)
 def get_card(
     deck_id: UUID,
     card_id: UUID,
-    current_user: UserModel = Depends(current_active_user),
+    current_user: UserRead = Depends(current_active_user),
     session: Session = Depends(get_async_session),
 ):
     """
@@ -123,11 +123,11 @@ def get_card(
     return card
 
 
-@router.post("/{deck_id}/cards", response_model=Card)
+@router.post("/{deck_id}/cards", response_model=CardRead)
 def create_card(
     deck_id: UUID,
     card: CardCreate,
-    current_user: UserModel = Depends(current_active_user),
+    current_user: UserRead = Depends(current_active_user),
     session: Session = Depends(get_async_session),
 ):
     """
@@ -174,12 +174,12 @@ def create_card(
     return new_card
 
 
-@router.patch("/{deck_id}/cards/{card_id}", response_model=Card)
+@router.patch("/{deck_id}/cards/{card_id}", response_model=CardRead)
 def edit_card(
     deck_id: UUID,
     card_id: UUID,
     new_card_data: CardPatch,
-    current_user: UserModel = Depends(current_active_user),
+    current_user: UserRead = Depends(current_active_user),
     session: Session = Depends(get_async_session),
 ):
     """
@@ -205,7 +205,7 @@ def edit_card(
 def get_reviews(
     deck_id: UUID,
     card_id: UUID,
-    current_user: UserModel = Depends(current_active_user),
+    current_user: UserRead = Depends(current_active_user),
     session: Session = Depends(get_async_session),
 ):
     """
@@ -221,12 +221,12 @@ def get_reviews(
     return card.reviews
 
 
-@router.put("/{deck_id}/cards/{card_id}/tags/{tag_name}", response_model=Card)
+@router.put("/{deck_id}/cards/{card_id}/tags/{tag_name}", response_model=CardRead)
 def assign_tag_to_card(
     deck_id: UUID,
     card_id: UUID,
     tag_name: str,
-    current_user: UserModel = Depends(current_active_user),
+    current_user: UserRead = Depends(current_active_user),
     session: Session = Depends(get_async_session),
 ):
     """
@@ -246,12 +246,12 @@ def assign_tag_to_card(
     card.assign_tag(session=session, tag_id=tag.id)
 
 
-@router.delete("/{deck_id}/cards/{card_id}/tags/{tag_name}", response_model=Card)
+@router.delete("/{deck_id}/cards/{card_id}/tags/{tag_name}", response_model=CardRead)
 def remove_tag_from_card(
     deck_id: UUID,
     card_id: UUID,
     tag_name: str,
-    current_user: UserModel = Depends(current_active_user),
+    current_user: UserRead = Depends(current_active_user),
     session: Session = Depends(get_async_session),
 ):
     """
@@ -272,13 +272,13 @@ def remove_tag_from_card(
 
 
 @router.put(
-    "/{deck_id}/cards/{card_id}/context/question/{fact_id}", response_model=Card
+    "/{deck_id}/cards/{card_id}/context/question/{fact_id}", response_model=CardRead
 )
 def assign_question_context_to_card(
     deck_id: UUID,
     card_id: UUID,
     fact_id: UUID,
-    current_user: UserModel = Depends(current_active_user),
+    current_user: UserRead = Depends(current_active_user),
     session: Session = Depends(get_async_session),
 ):
     """
@@ -301,13 +301,13 @@ def assign_question_context_to_card(
 
 
 @router.delete(
-    "/{deck_id}/cards/{card_id}/context/question/{fact_id}", response_model=Card
+    "/{deck_id}/cards/{card_id}/context/question/{fact_id}", response_model=CardRead
 )
 def remove_question_context_from_card(
     deck_id: UUID,
     card_id: UUID,
     fact_id: UUID,
-    current_user: UserModel = Depends(current_active_user),
+    current_user: UserRead = Depends(current_active_user),
     session: Session = Depends(get_async_session),
 ):
     """
@@ -329,12 +329,12 @@ def remove_question_context_from_card(
     card.remove_question_context(session=session, fact_id=fact.id)
 
 
-@router.put("/{deck_id}/cards/{card_id}/context/answer/{fact_id}", response_model=Card)
+@router.put("/{deck_id}/cards/{card_id}/context/answer/{fact_id}", response_model=CardRead)
 def assign_answer_context_to_card(
     deck_id: UUID,
     card_id: UUID,
     fact_id: UUID,
-    current_user: UserModel = Depends(current_active_user),
+    current_user: UserRead = Depends(current_active_user),
     session: Session = Depends(get_async_session),
 ):
     """
@@ -357,13 +357,13 @@ def assign_answer_context_to_card(
 
 
 @router.delete(
-    "/{deck_id}/cards/{card_id}/context/answer/{fact_id}", response_model=Card
+    "/{deck_id}/cards/{card_id}/context/answer/{fact_id}", response_model=CardRead
 )
 def remove_answer_context_from_card(
     deck_id: UUID,
     card_id: UUID,
     fact_id: UUID,
-    current_user: UserModel = Depends(current_active_user),
+    current_user: UserRead = Depends(current_active_user),
     session: Session = Depends(get_async_session),
 ):
     """
@@ -389,7 +389,7 @@ def remove_answer_context_from_card(
 def delete_card(
     deck_id: UUID,
     card_id: UUID,
-    current_user: UserModel = Depends(current_active_user),
+    current_user: UserRead = Depends(current_active_user),
     session: Session = Depends(get_async_session),
 ):
     """

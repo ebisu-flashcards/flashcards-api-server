@@ -10,9 +10,9 @@ from flashcards_server.database import get_async_session
 
 # from flashcards_server.auth import oauth2_scheme
 from flashcards_server.api.decks import valid_deck
-from flashcards_server.api.cards import Card, valid_card
+from flashcards_server.api.cards import CardRead, valid_card
 from flashcards_server.users import current_active_user
-from flashcards_server.models import User as UserModel
+from flashcards_server.schemas import UserRead
 
 
 class TestData(BaseModel):
@@ -28,10 +28,10 @@ router = APIRouter(
 )
 
 
-@router.get("/{deck_id}/start", response_model=Card)
+@router.get("/{deck_id}/start", response_model=CardRead)
 def first_card(
     deck_id: UUID,
-    current_user: UserModel = Depends(current_active_user),
+    current_user: UserRead = Depends(current_active_user),
     session: Session = Depends(get_async_session),
 ):
     """
@@ -45,11 +45,11 @@ def first_card(
     return scheduler.next_card()
 
 
-@router.post("/{deck_id}/next", response_model=Card)
+@router.post("/{deck_id}/next", response_model=CardRead)
 def next_card(
     deck_id: UUID,
     test_data: TestData,
-    current_user: UserModel = Depends(current_active_user),
+    current_user: UserRead = Depends(current_active_user),
     session: Session = Depends(get_async_session),
 ):
     """

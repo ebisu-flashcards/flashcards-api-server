@@ -8,8 +8,8 @@ from flashcards_core.database import Deck as DeckModel, Tag as TagModel
 
 from flashcards_server.database import get_async_session
 from flashcards_server.users import current_active_user
-from flashcards_server.models import User as UserModel
-from flashcards_server.api.tags import Tag, TagCreate
+from flashcards_server.schemas import UserRead
+from flashcards_server.api.tags import TagRead, TagCreate
 
 
 class DeckBase(BaseModel):
@@ -30,19 +30,19 @@ class DeckPatch(DeckCreate):
     state: Optional[dict]
 
 
-class Deck(DeckBase):
+class DeckRead(DeckBase):
     id: UUID
     parameters: dict
     state: dict
-    tags: List[Tag]
+    tags: List[TagRead]
 
     class Config:
         orm_mode = True
 
 
-def valid_deck(
+async def valid_deck(
     deck_id: UUID,
-    user: UserModel,
+    user: UserRead,
     session: Session = Depends(get_async_session),
 ) -> DeckModel:
     """
@@ -68,18 +68,18 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[Deck])
+@router.get("", response_model=List[DeckRead])
 async def get_my_decks(
-    current_user: UserModel = Depends(current_active_user),
+    current_user: UserRead = Depends(current_active_user),
     session: Session = Depends(get_async_session),
 ):
-    return current_user.get_decks(session=session)
+    return await current_user.get_decks(session=session)
 
 
-@router.get("/{deck_id}", response_model=Deck)
-def get_deck(
+@router.get("/{deck_id}", response_model=DeckRead)
+async def get_deck(
     deck_id: UUID,
-    current_user: UserModel = Depends(current_active_user),
+    current_user: UserRead = Depends(current_active_user),
     session: Session = Depends(get_async_session),
 ):
     """
@@ -88,13 +88,13 @@ def get_deck(
     :param deck_id: the id of the deck to get
     :returns: The details of the deck. Cards list not included, use ``/deck/<uuid>/cards``
     """
-    return valid_deck(session=session, user=current_user, deck_id=deck_id)
+    return await valid_deck(session=session, user=current_user, deck_id=deck_id)
 
 
-@router.post("/", response_model=Deck)
-def create_deck(
+@router.post("/", response_model=DeckRead)
+async def create_deck(
     deck: DeckCreate,
-    current_user: UserModel = Depends(current_active_user),
+    current_user: UserRead = Depends(current_active_user),
     session: Session = Depends(get_async_session),
 ):
     """
@@ -105,23 +105,23 @@ def create_deck(
     """
     deck_data = deck.dict()
     tags = deck_data.pop("tags", [])
-    new_deck = current_user.create_deck(session=session, deck_data=deck_data)
+    new_deck: DeckModel = await current_user.create_deck(session=session, deck_data=deck_data)
 
     if tags:
         for tag in tags:
-            tag_object = TagModel.get_by_name(session=session, name=tag["name"])
+            tag_object = await session.run_sync(TagModel.get_by_name, name=tag["name"]) 
             if not tag_object:
-                tag_object = TagModel.create(session=session, name=tag["name"])
-            new_deck.assign_tag(session=session, tag_id=tag_object.id)
+                tag_object = await session.run_sync(TagModel.create, name=tag["name"]) 
+            await session.run_sync(new_deck.assign_tag, tag_id=tag_object.id)
 
     return new_deck
 
 
-@router.patch("/{deck_id}", response_model=Deck)
-def edit_deck(
+@router.patch("/{deck_id}", response_model=DeckRead)
+async def edit_deck(
     deck_id: UUID,
     new_deck_data: DeckPatch,
-    current_user: UserModel = Depends(current_active_user),
+    current_user: UserRead = Depends(current_active_user),
     session: Session = Depends(get_async_session),
 ):
     """
@@ -131,12 +131,12 @@ def edit_deck(
     :param new_deck_data: the new details of the deck. Can be partial.
     :returns: The modified deck. Cards list not included, use ``/deck/<uuid>/cards``
     """
-    deck_to_edit = valid_deck(session=session, user=current_user, deck_id=deck_id)
+    deck_to_edit = await valid_deck(session=session, user=current_user, deck_id=deck_id)
 
     update_data = new_deck_data.dict(exclude_unset=True)
     tags = update_data.pop("tags", [])
 
-    new_deck_model = Deck(**vars(deck_to_edit)).copy(update=update_data)
+    new_deck_model = DeckRead(**vars(deck_to_edit)).copy(update=update_data)
     new_deck = DeckModel.update(
         session=session, object_id=deck_id, **new_deck_model.dict()
     )
@@ -152,9 +152,9 @@ def edit_deck(
 
 
 @router.delete("/{deck_id}")
-def delete_deck(
+async def delete_deck(
     deck_id: UUID,
-    current_user: UserModel = Depends(current_active_user),
+    current_user: UserRead = Depends(current_active_user),
     session: Session = Depends(get_async_session),
 ):
     """
@@ -164,4 +164,4 @@ def delete_deck(
     :returns: None
     """
     valid_deck(session=session, user=current_user, deck_id=deck_id)
-    current_user.delete_deck(session=session, deck_id=deck_id)
+    await current_user.delete_deck(session=session, deck_id=deck_id)
