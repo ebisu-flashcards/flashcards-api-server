@@ -110,12 +110,12 @@ async def create_deck(
     tags = deck_data.pop("tags", [])
     new_deck: DeckModel = await current_user.create_deck(session=session, deck_data=deck_data)
     
-    # if tags:
-    #     for tag in tags:
-    #         tag_object = await session.run_sync(TagModel.get_by_name, name=tag["name"]) 
-    #         if not tag_object:
-    #             tag_object = await session.run_sync(TagModel.create, name=tag["name"]) 
-    #         await session.run_sync(new_deck.assign_tag, tag_id=tag_object.id)
+    if tags:
+        for tag in tags:
+            tag_object = await session.run_sync(TagModel.get_by_name, name=tag["name"]) 
+            if not tag_object:
+                tag_object = await session.run_sync(TagModel.create, name=tag["name"]) 
+            await session.run_sync(new_deck.assign_tag, tag_id=tag_object.id)
 
     return new_deck
 

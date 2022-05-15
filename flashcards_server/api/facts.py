@@ -2,6 +2,7 @@ from typing import List, Optional
 
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
@@ -10,6 +11,8 @@ from flashcards_server.database import (
     Fact as FactModel,
     Tag as TagModel,
 )
+from flashcards_server.users import current_active_user
+from flashcards_server.schemas import UserRead
 from flashcards_server.api.tags import TagRead, TagCreate
 
 
@@ -43,9 +46,26 @@ router = APIRouter(
 )
 
 
+@router.get("/", response_model=List[FactRead])
+async def get_facts(
+    offset: int = 0,
+    limit: int = 100,
+    current_user: UserRead = Depends(current_active_user),  # to protect endpoint
+    session: Session = Depends(get_async_session),
+):
+    """
+    Get all facts.
+
+    :returns: All the facts, paginated.
+    """
+    results = await FactModel.get_all_async(session=session, offset=offset, limit=limit)
+    return list(results)
+
+
 @router.get("/{fact_id}", response_model=FactRead)
-def get_fact(
+async def get_fact(
     fact_id: UUID,
+    current_user: UserRead = Depends(current_active_user),  # to protect endpoint
     session: Session = Depends(get_async_session),
 ):
     """
@@ -54,7 +74,7 @@ def get_fact(
     :param fact_id: the id of the fact to get
     :returns: The details of the fact.
     """
-    db_fact = FactModel.get_one(session=session, object_id=fact_id)
+    db_fact = await FactModel.get_one_async(session=session, object_id=fact_id)
     if db_fact is None:
         raise HTTPException(
             status_code=404, detail=f"Fact with ID '{fact_id}' not found"
@@ -63,10 +83,11 @@ def get_fact(
 
 
 @router.get("/tag/{tag_name}", response_model=List[FactRead])
-def get_fact_by_tag(
+async def get_facts_by_tag(
     tag_name: str,
     offset: int = 0,
     limit: int = 100,
+    current_user: UserRead = Depends(current_active_user),  # to protect endpoint
     session: Session = Depends(get_async_session),
 ):
     """
@@ -77,17 +98,20 @@ def get_fact_by_tag(
     :param limit: for pagination, maximum number of elements to return.
     :returns: The list of facts with this tag.
     """
-    db_facts = (
-        session.query(FactModel)
-        .filter(FactModel.tags.any(TagModel.name == tag_name))
-        .all()
+    stmt = (
+        select(FactModel)
+        .where(FactModel.tags.any(TagModel.name == tag_name))
+        .offset(offset)
+        .limit(limit)
     )
-    return db_facts
+    results = await session.scalars(stmt)
+    return results.all()
 
 
 @router.post("/", response_model=FactRead)
-def create_fact(
+async def create_fact(
     fact: FactCreate,
+    current_user: UserRead = Depends(current_active_user),  # to protect endpoint
     session: Session = Depends(get_async_session),
 ):
     """
@@ -98,20 +122,21 @@ def create_fact(
     """
     fact_data = fact.dict()
     tags = fact_data.pop("tags", [])
-    new_fact = FactModel.create_async(session=session, **fact_data)
+    new_fact = await FactModel.create_async(session=session, **fact_data)
 
     for tag in tags:
-        tag_object = TagModel.get_by_name(session=session, name=tag["name"])
+        tag_object = await TagModel.get_by_name_async(session=session, name=tag["name"])
         if not tag_object:
-            tag_object = TagModel.create_async(session=session, name=tag["name"])
-        new_fact.assign_tag(session=session, tag_id=tag_object.id)
+            tag_object = await TagModel.create_async(session=session, name=tag["name"])
+        await new_fact.assign_tag_async(session=session, tag_id=tag_object.id)
     return new_fact
 
 
 @router.patch("/{fact_id}", response_model=FactRead)
-def edit_fact(
+async def edit_fact(
     fact_id: UUID,
     new_fact_data: FactPatch,
+    current_user: UserRead = Depends(current_active_user),  # to protect endpoint
     session: Session = Depends(get_async_session),
 ):
     """
@@ -122,16 +147,17 @@ def edit_fact(
     :returns: The modified fact
     """
     update_data = new_fact_data.dict(exclude_unset=True)
-    original_data = vars(FactModel.get_one(session=session, object_id=fact_id))
+    original_data = vars(await FactModel.get_one_async(session=session, object_id=fact_id))
     new_model = FactBase(**original_data).copy(update=update_data)
-    new_fact = FactModel.update(session=session, object_id=fact_id, **new_model.dict())
+    new_fact = await FactModel.update(session=session, object_id=fact_id, **new_model.dict())
     return new_fact
 
 
 @router.put("/{fact_id}/tags/{tag_name}", response_model=FactRead)
-def assign_tag_to_fact(
+async def assign_tag_to_fact(
     fact_id: UUID,
     tag_name: str,
+    current_user: UserRead = Depends(current_active_user),  # to protect endpoint
     session: Session = Depends(get_async_session),
 ):
     """
@@ -141,18 +167,19 @@ def assign_tag_to_fact(
     :param tag_name: the tag to assign to this fact
     :returns: The modified fact
     """
-    fact = FactModel.get_one(session=session, object_id=fact_id)
-    tag = TagModel.get_by_name(session=session, name=tag_name)
+    fact = await FactModel.get_one_async(session=session, object_id=fact_id)
+    tag = await TagModel.get_by_name_async(session=session, name=tag_name)
     if not tag:
-        tag = TagModel.create(session=session, name=tag_name)
-    fact.assign_tag(session=session, tag_id=tag.id)
+        tag = await TagModel.create_async(session=session, name=tag_name)
+    await fact.assign_tag_async(session=session, tag_id=tag.id)
     return fact
 
 
 @router.delete("/{fact_id}/tags/{tag_name}", response_model=FactRead)
-def remove_tag_from_fact(
+async def remove_tag_from_fact(
     fact_id: UUID,
     tag_name: str,
+    current_user: UserRead = Depends(current_active_user),  # to protect endpoint
     session: Session = Depends(get_async_session),
 ):
     """
@@ -162,9 +189,9 @@ def remove_tag_from_fact(
     :param tag_name: the tag to remove from this fact
     :returns: The modified fact
     """
-    fact = FactModel.get_one(session=session, object_id=fact_id)
-    tag = TagModel.get_by_name(session=session, name=tag_name)
+    fact = await FactModel.get_one_async(session=session, object_id=fact_id)
+    tag = await TagModel.get_by_name_async(session=session, name=tag_name)
     if not tag:
         raise HTTPException(status_code=404, detail=f"Tag '{tag_name}' doesn't exist.")
-    fact.remove_tag(session=session, tag_id=tag.id)
+    await fact.remove_tag_async(session=session, tag_id=tag.id)
     return fact

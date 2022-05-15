@@ -9,6 +9,8 @@ from flashcards_server.database import (
     get_async_session,
     Tag as TagModel,
 )
+from flashcards_server.users import current_active_user
+from flashcards_server.schemas import UserRead
 
 
 class TagBase(BaseModel):
@@ -38,14 +40,17 @@ router = APIRouter(
 async def get_tags(
     offset: int = 0,
     limit: int = 100,
+    current_user: UserRead = Depends(current_active_user),  # to protect endpoint
     session: Session = Depends(get_async_session),
 ):
-    return await TagModel.get_all_async(session=session, offset=offset, limit=limit)
+    results = await TagModel.get_all_async(session=session, offset=offset, limit=limit)
+    return list(results)
 
 
 @router.get("/{tag_id}", response_model=TagRead)
 async def get_tag(
     tag_id: str,
+    current_user: UserRead = Depends(current_active_user),  # to protect endpoint
     session: Session = Depends(get_async_session),
 ):
     return await TagModel.get_one_async(session=session, object_id=tag_id)
@@ -54,6 +59,7 @@ async def get_tag(
 @router.post("/", response_model=TagRead)
 async def create_tag(
     tag: TagCreate,
+    current_user: UserRead = Depends(current_active_user),  # to protect endpoint
     session: Session = Depends(get_async_session),
 ):
     new_tag = await TagModel.create_async(session=session, **tag.dict())
@@ -63,6 +69,7 @@ async def create_tag(
 async def edit_tag(
     tag: TagCreate,
     tag_id: str,
+    current_user: UserRead = Depends(current_active_user),  # to protect endpoint
     session: Session = Depends(get_async_session),
 ):
     db_tag = await TagModel.get_one_async(session=session, object_id=tag_id)
@@ -72,6 +79,7 @@ async def edit_tag(
 @router.delete("/{tag_id}")
 async def delete_tag(
     tag_id: str,
+    current_user: UserRead = Depends(current_active_user),  # to protect endpoint
     session: Session = Depends(get_async_session),
 ):
     try:
