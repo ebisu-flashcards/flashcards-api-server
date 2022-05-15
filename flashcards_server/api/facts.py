@@ -23,6 +23,7 @@ class FactBase(BaseModel):
 
 class FactCreate(FactBase):
     tags: Optional[List[TagCreate]]
+    related: Optional[List['FactBase']]
 
 
 class FactPatch(BaseModel):
@@ -30,9 +31,19 @@ class FactPatch(BaseModel):
     format: Optional[str]
 
 
+class RelatedFact(FactBase):
+    id: UUID
+    tags: List[TagRead]
+    relationship: str
+
+    class Config:
+        orm_mode = True
+
+
 class FactRead(FactBase):
     id: UUID
     tags: List[TagRead]
+    related: Optional[List[RelatedFact]]
 
     class Config:
         orm_mode = True
@@ -58,8 +69,12 @@ async def get_facts(
 
     :returns: All the facts, paginated.
     """
-    results = await FactModel.get_all_async(session=session, offset=offset, limit=limit)
-    return list(results)
+    results: List[FactModel] = await FactModel.get_all_async(session=session, offset=offset, limit=limit)
+    db_facts = []
+    for db_fact in results:
+        db_fact.related = await db_fact.related_facts_async(session)
+        db_facts.append(db_fact)
+    return db_facts
 
 
 @router.get("/{fact_id}", response_model=FactRead)
@@ -74,7 +89,8 @@ async def get_fact(
     :param fact_id: the id of the fact to get
     :returns: The details of the fact.
     """
-    db_fact = await FactModel.get_one_async(session=session, object_id=fact_id)
+    db_fact: FactModel = await FactModel.get_one_async(session=session, object_id=fact_id)
+    db_fact.related = await db_fact.related_facts_async(session)
     if db_fact is None:
         raise HTTPException(
             status_code=404, detail=f"Fact with ID '{fact_id}' not found"
@@ -105,6 +121,10 @@ async def get_facts_by_tag(
         .limit(limit)
     )
     results = await session.scalars(stmt)
+    db_facts = []
+    for db_fact in results:
+        db_fact.related = await db_fact.related_facts_async(session)
+        db_facts.append(db_fact)
     return results.all()
 
 
@@ -147,7 +167,7 @@ async def edit_fact(
     :returns: The modified fact
     """
     update_data = new_fact_data.dict(exclude_unset=True)
-    original_data = vars(await FactModel.get_one_async(session=session, object_id=fact_id))
+    original_data = await get_fact(fact_id=fact_id, current_user=current_active_user, session=session)
     new_model = FactBase(**original_data).copy(update=update_data)
     new_fact = await FactModel.update(session=session, object_id=fact_id, **new_model.dict())
     return new_fact
@@ -172,6 +192,8 @@ async def assign_tag_to_fact(
     if not tag:
         tag = await TagModel.create_async(session=session, name=tag_name)
     await fact.assign_tag_async(session=session, tag_id=tag.id)
+
+    fact = await get_fact(fact_id=fact_id, current_user=current_active_user, session=session)
     return fact
 
 
@@ -194,4 +216,60 @@ async def remove_tag_from_fact(
     if not tag:
         raise HTTPException(status_code=404, detail=f"Tag '{tag_name}' doesn't exist.")
     await fact.remove_tag_async(session=session, tag_id=tag.id)
+
+    fact = await get_fact(fact_id=fact_id, current_user=current_active_user, session=session)
     return fact
+
+@router.put("/{fact_id}/related/", response_model=FactRead)
+async def assign_related_fact(
+    fact_id: UUID,
+    related_fact_id: str,
+    relationship: str,
+    current_user: UserRead = Depends(current_active_user),  # to protect endpoint
+    session: Session = Depends(get_async_session),
+):
+    """
+    Assign a related fact to the fact.
+
+    :param fact_id: the id of the fact to edit
+    :param related_fact_id: the related fact to assign to this fact
+    :param relationship: the type of relationship between these cards
+    :returns: The modified fact
+    """
+    fact: FactModel = await FactModel.get_one_async(session=session, object_id=fact_id)
+    await fact.assign_related_fact_async(session=session, fact_id=related_fact_id, relationship=relationship)
+    fact = await get_fact(fact_id=fact_id, current_user=current_active_user, session=session)
+    return fact
+
+
+@router.delete("/{fact_id}/related/", response_model=FactRead)
+async def remove_related_fact(
+    fact_id: UUID,
+    related_fact_id: str,
+    relationship: str,
+    current_user: UserRead = Depends(current_active_user),  # to protect endpoint
+    session: Session = Depends(get_async_session),
+):
+    """
+    Remove the relationship between these two facts.
+
+    :param fact_id: the id of the fact to edit
+    :param related_fact_id: the related fact to assign to this fact
+    :returns: The modified fact
+    """
+    fact: FactModel = await FactModel.get_one_async(session=session, object_id=fact_id)
+    await fact.remove_related_fact_async(session=session, fact_id=related_fact_id, relationship=relationship)
+    fact = await get_fact(fact_id=fact_id, current_user=current_active_user, session=session)
+    return fact
+
+
+@router.delete("/{fact_id}")
+async def delete_fact(
+    fact_id: str,
+    current_user: UserRead = Depends(current_active_user),  # to protect endpoint
+    session: Session = Depends(get_async_session),
+):
+    try:
+        await FactModel.delete_async(session=session, object_id=fact_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail=f"Fact '{fact_id}' not found")

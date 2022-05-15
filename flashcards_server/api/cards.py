@@ -3,6 +3,7 @@ from typing import Any, List, Optional
 from uuid import UUID
 from datetime import datetime
 from fastapi import Depends, HTTPException
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
@@ -32,6 +33,33 @@ class CardPatch(BaseModel):
     answer_id: Optional[UUID]
 
 
+class RelatedCard(BaseModel):
+    id: UUID
+    deck_id: UUID
+    question: FactRead
+    answer: FactRead
+    question_context_facts: List[FactRead]
+    answer_context_facts: List[FactRead]
+    tags: List[TagRead]
+
+    class Config:
+        orm_mode = True
+
+
+class RelatedCard(BaseModel):
+    id: UUID
+    deck_id: UUID
+    question: FactRead
+    answer: FactRead
+    question_context_facts: List[FactRead]
+    answer_context_facts: List[FactRead]
+    tags: List[TagRead]
+    relationship: str
+
+    class Config:
+        orm_mode = True
+
+
 class CardRead(BaseModel):
     id: UUID
     deck_id: UUID
@@ -40,6 +68,7 @@ class CardRead(BaseModel):
     question_context_facts: List[FactRead]
     answer_context_facts: List[FactRead]
     tags: List[TagRead]
+    related: Optional[List[RelatedCard]]
 
     class Config:
         orm_mode = True
@@ -94,13 +123,18 @@ async def get_cards(
     """
     valid_deck(session=session, user=current_user, deck_id=deck_id)
     stmt = (
-        CardModel.select()
+        select(CardModel)
         .where(CardModel.deck_id == deck_id)
         .offset(offset)
         .limit(limit)
     )
-    results = await session.execute(stmt)
-    return results.all()
+    results = await session.scalars(stmt)
+    db_cards = results.all()
+    cards = []
+    for card in db_cards:
+        card.related = await card.related_cards_async(session)
+        cards.append(card)
+    return cards
 
 
 @router.get("/{deck_id}/cards/{card_id}", response_model=CardRead)
@@ -120,11 +154,12 @@ async def get_card(
     card = await valid_card(
         session=session, user=current_user, deck_id=deck_id, card_id=card_id
     )
+    card.related = await card.related_cards_async(session)
     return card
 
 
 @router.post("/{deck_id}/cards", response_model=CardRead)
-def create_card(
+async def create_card(
     deck_id: UUID,
     card: CardCreate,
     current_user: UserRead = Depends(current_active_user),
@@ -144,18 +179,18 @@ def create_card(
     tags = card_data.pop("tags", [])
     question_context = card_data.pop("question_context_facts", [])
     answer_context = card_data.pop("answer_context_facts", [])
-    new_card = CardModel.create_async(session=session, **card_data)
+    new_card = await CardModel.create_async(session=session, **card_data)
 
     if tags:
         for tag in tags:
-            tag_object = TagModel.get_one_async(session=session, object_id=tag["name"])
+            tag_object = await TagModel.get_by_name_async(session=session, name=tag["name"])
             if not tag_object:
-                tag_object = TagModel.create_async(session=session, name=tag["name"])
+                tag_object = await TagModel.create_async(session=session, name=tag["name"])
             new_card.assign_tag(session=session, tag_id=tag_object.id)
 
     if question_context:
         for fact in question_context:
-            fact_object = FactModel.get_one_async(session=session, object_id=fact)
+            fact_object = await FactModel.get_one_async(session=session, object_id=fact)
             if not fact_object:
                 raise HTTPException(
                     status_code=404, detail=f"Fact with ID '{fact}' not found"
@@ -164,7 +199,7 @@ def create_card(
 
     if answer_context:
         for fact in answer_context:
-            fact_object = FactModel.get_one_async(session=session, object_id=fact)
+            fact_object = await FactModel.get_one_async(session=session, object_id=fact)
             if not fact_object:
                 raise HTTPException(
                     status_code=404, detail=f"Fact with ID '{fact}' not found"
@@ -240,9 +275,9 @@ async def assign_tag_to_card(
     card = await valid_card(
         session=session, user=current_user, deck_id=deck_id, card_id=card_id
     )
-    tag = TagModel.get_one_async(session=session, name=tag_name)
+    tag = await TagModel.get_by_name_async(session=session, name=tag["name"])
     if not tag:
-        tag = TagModel.create_async(session=session, name=tag_name)
+        tag = await TagModel.create_async(session=session, name=tag_name)
     card.assign_tag(session=session, tag_id=tag.id)
 
 
@@ -265,7 +300,7 @@ async def remove_tag_from_card(
     card = await valid_card(
         session=session, user=current_user, deck_id=deck_id, card_id=card_id
     )
-    tag = TagModel.get_one_async(session=session, name=tag_name)
+    tag = await TagModel.get_by_name_async(session=session, name=tag["name"])
     if not tag:
         raise HTTPException(status_code=404, detail=f"Tag '{tag_name}' doesn't exist.")
     card.remove_tag(session=session, tag_id=tag.id)
@@ -292,7 +327,7 @@ async def assign_question_context_to_card(
     card = await valid_card(
         session=session, user=current_user, deck_id=deck_id, card_id=card_id
     )
-    fact = FactModel.get_one_async(session=session, object_id=fact_id)
+    fact = await FactModel.get_one_async(session=session, object_id=fact_id)
     if not fact:
         raise HTTPException(
             status_code=404, detail=f"Fact with ID '{fact_id}' doesn't exist."
@@ -321,7 +356,7 @@ async def remove_question_context_from_card(
     card = await valid_card(
         session=session, user=current_user, deck_id=deck_id, card_id=card_id
     )
-    fact = FactModel.get_one_async(session=session, object_id=fact_id)
+    fact = await FactModel.get_one_async(session=session, object_id=fact_id)
     if not fact:
         raise HTTPException(
             status_code=404, detail=f"Fact with ID '{fact_id}' doesn't exist."
@@ -348,7 +383,7 @@ async def assign_answer_context_to_card(
     card = await valid_card(
         session=session, user=current_user, deck_id=deck_id, card_id=card_id
     )
-    fact = FactModel.get_one_async(session=session, object_id=fact_id)
+    fact = await FactModel.get_one_async(session=session, object_id=fact_id)
     if not fact:
         raise HTTPException(
             status_code=404, detail=f"Fact with ID '{fact_id}' doesn't exist."
@@ -377,12 +412,64 @@ async def remove_answer_context_from_card(
     card = await valid_card(
         session=session, user=current_user, deck_id=deck_id, card_id=card_id
     )
-    fact = FactModel.get_one_async(session=session, object_id=fact_id)
+    fact = await FactModel.get_one_async(session=session, object_id=fact_id)
     if not fact:
         raise HTTPException(
             status_code=404, detail=f"Fact with ID '{fact_id}' doesn't exist."
         )
     card.remove_answer_context(session=session, fact_id=fact.id)
+
+
+@router.put("/{deck_id}/cards/{card_id}/related", response_model=CardRead)
+async def assign_tag_to_card(
+    deck_id: UUID,
+    card_id: UUID,
+    related_card_id: UUID,
+    relationship: str,
+    current_user: UserRead = Depends(current_active_user),
+    session: Session = Depends(get_async_session),
+):
+    """
+    Create a relationship between these two cards.
+
+    :param deck_id: the id of the deck this card belongs to
+    :param card_id: the id of the card to edit
+    :param card_id: the id of the related card
+    :param relationship: the type of relationship between the cards
+    :returns: The modified card
+    """
+    card = await valid_card(
+        session=session, user=current_user, deck_id=deck_id, card_id=card_id
+    )
+    card.assign_related_card_async(session=session, card_id=related_card_id, relationship=relationship)
+    card = await get_card(deck_id=deck_id, card_id=card_id, current_user=current_user, session=session)
+    return card
+
+
+@router.delete("/{deck_id}/cards/{card_id}/related", response_model=CardRead)
+async def remove_related_card(
+    deck_id: UUID,
+    card_id: UUID,
+    related_card_id: UUID,
+    relationship: str,
+    current_user: UserRead = Depends(current_active_user),
+    session: Session = Depends(get_async_session),
+):
+    """
+    Remove a relationship between these two cards.
+
+    :param deck_id: the id of the deck this card belongs to
+    :param card_id: the id of the card to edit
+    :param card_id: the id of the related card
+    :param relationship: the type of relationship between the cards
+    :returns: The modified card
+    """
+    card = await valid_card(
+        session=session, user=current_user, deck_id=deck_id, card_id=card_id
+    )
+    card.remove_related_card_async(session=session, card_id=related_card_id, relationship=relationship)
+    card = await get_card(deck_id=deck_id, card_id=card_id, current_user=current_user, session=session)
+    return card
 
 
 @router.delete("/{deck_id}/cards/{card_id}")

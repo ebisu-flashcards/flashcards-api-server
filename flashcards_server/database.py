@@ -77,6 +77,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
         insert = DeckOwner.insert().values(owner_id=self.id, deck_id=new_deck.id)
         await session.execute(insert)
         await session.commit()
+        await session.refresh(new_deck)
         return new_deck
 
     async def delete_deck(self, session: Session, deck_id: UUID) -> None:
