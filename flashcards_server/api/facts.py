@@ -4,9 +4,12 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from flashcards_core.database import Fact as FactModel, Tag as TagModel
 
-from flashcards_server.database import get_async_session
+from flashcards_server.database import (
+    get_async_session,
+    Fact as FactModel,
+    Tag as TagModel,
+)
 from flashcards_server.api.tags import TagRead, TagCreate
 
 
@@ -95,12 +98,12 @@ def create_fact(
     """
     fact_data = fact.dict()
     tags = fact_data.pop("tags", [])
-    new_fact = FactModel.create(session=session, **fact_data)
+    new_fact = FactModel.create_async(session=session, **fact_data)
 
     for tag in tags:
         tag_object = TagModel.get_by_name(session=session, name=tag["name"])
         if not tag_object:
-            tag_object = TagModel.create(session=session, name=tag["name"])
+            tag_object = TagModel.create_async(session=session, name=tag["name"])
         new_fact.assign_tag(session=session, tag_id=tag_object.id)
     return new_fact
 

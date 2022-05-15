@@ -1,11 +1,14 @@
 from typing import List
 
+from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from flashcards_core.database import Tag as TagModel
 
-from flashcards_server.database import get_async_session
+from flashcards_server.database import (
+    get_async_session,
+    Tag as TagModel,
+)
 
 
 class TagBase(BaseModel):
@@ -17,6 +20,8 @@ class TagCreate(TagBase):
 
 
 class TagRead(TagBase):
+    id: UUID
+
     class Config:
         orm_mode = True
 
@@ -30,50 +35,46 @@ router = APIRouter(
 
 
 @router.get("/", response_model=List[TagRead])
-def get_tags(
+async def get_tags(
     offset: int = 0,
     limit: int = 100,
     session: Session = Depends(get_async_session),
 ):
-    return TagModel.get_all(session=session, offset=offset, limit=limit)
+    return await TagModel.get_all_async(session=session, offset=offset, limit=limit)
 
 
-@router.get("/{tag_name}", response_model=TagRead)
-def get_tag(
-    tag_name: str,
+@router.get("/{tag_id}", response_model=TagRead)
+async def get_tag(
+    tag_id: str,
     session: Session = Depends(get_async_session),
 ):
-    db_tag = TagModel.get_by_name(session=session, name=tag_name)
-    if db_tag is None:
-        raise HTTPException(status_code=404, detail=f"Tag '{tag_name}' not found")
-    return db_tag
+    return await TagModel.get_one_async(session=session, object_id=tag_id)
 
 
 @router.post("/", response_model=TagRead)
-def create_tag(
+async def create_tag(
     tag: TagCreate,
     session: Session = Depends(get_async_session),
 ):
-    return TagModel.create(session=session, **tag.dict())
+    new_tag = await TagModel.create_async(session=session, **tag.dict())
+    return new_tag
 
-
-@router.patch("/{tag_name}", response_model=TagRead)
-def edit_tag(
+@router.patch("/{tag_id}", response_model=TagRead)
+async def edit_tag(
     tag: TagCreate,
-    tag_name: str,
+    tag_id: str,
     session: Session = Depends(get_async_session),
 ):
-    db_tag = TagModel.get_by_name(session=session, name=tag_name)
-    return TagModel.update(session=session, object_id=db_tag.id, **tag.dict())
+    db_tag = await TagModel.get_one_async(session=session, object_id=tag_id)
+    return await TagModel.update_async(session=session, object_id=tag_id, **tag.dict())
 
 
-@router.delete("/{tag_name}")
-def delete_tag(
-    tag_name: str,
+@router.delete("/{tag_id}")
+async def delete_tag(
+    tag_id: str,
     session: Session = Depends(get_async_session),
 ):
     try:
-        tag = TagModel.get_by_name(session=session, name=tag_name)
-        TagModel.delete(session=session, object_id=tag.id)
+        await TagModel.delete_async(session=session, object_id=tag_id)
     except ValueError:
-        raise HTTPException(status_code=404, detail=f"Tag '{tag_name}' not found")
+        raise HTTPException(status_code=404, detail=f"Tag '{tag_id}' not found")

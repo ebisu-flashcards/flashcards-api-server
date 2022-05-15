@@ -1,7 +1,6 @@
 from typing import AsyncGenerator, List
 
 from uuid import UUID
-import logging
 
 from fastapi import Depends
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID, SQLAlchemyUserDatabase
@@ -11,12 +10,9 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import Column, ForeignKey, Table, and_
 from sqlalchemy.orm import Session
 
+
 from flashcards_core.guid import GUID
-from flashcards_core.database import Base, Deck
-
-
-DATABASE_URL = "sqlite+aiosqlite:///./test.db"
-Base: DeclarativeMeta = declarative_base()
+from flashcards_core.database import Base, Deck, Card, Tag, Fact, Review
 
 
 class User(SQLAlchemyBaseUserTableUUID, Base):
@@ -54,7 +50,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
         )
         deck_owner_pairs = await session.execute(select)
         return list([
-            Deck.get_one(session=session, object_id=pair.deck_id)
+            await Deck.get_one_async(session=session, object_id=pair.deck_id)
             for pair in deck_owner_pairs
         ])
 
@@ -77,12 +73,10 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
         :param deck_data: the data of the deck to create.
         :param session: the session (see flashcards_core.database:init_db()).
         """
-        new_deck = await session.run_sync(Deck.create, **deck_data)
-
-        # insert = DeckOwner.insert().values(owner_id=self.id, deck_id=new_deck.id)
-        # session.execute(insert)
-        # session.commit()
-        # session.refresh(self)
+        new_deck = await Deck.create_async(session=session, **deck_data)
+        insert = DeckOwner.insert().values(owner_id=self.id, deck_id=new_deck.id)
+        await session.execute(insert)
+        await session.commit()
         return new_deck
 
     async def delete_deck(self, session: Session, deck_id: UUID) -> None:
@@ -92,7 +86,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
         :param session: the session (see flashcards_core.database:init_db()).
         :returns: None.
         """
-        Deck.delete(session=session, object_id=deck_id)
+        Deck.delete_async(session=session, object_id=deck_id)
         delete = DeckOwner.delete().where(DeckOwner.c.deck_id == deck_id)
         session.execute(delete)
         session.commit()
@@ -109,6 +103,8 @@ DeckOwner = Table(
 )
 
 
+
+DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 engine = create_async_engine(DATABASE_URL)
 async_session_maker = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 

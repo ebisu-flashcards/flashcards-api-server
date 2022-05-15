@@ -4,9 +4,12 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from flashcards_core.database import Deck as DeckModel, Tag as TagModel
 
-from flashcards_server.database import get_async_session
+from flashcards_server.database import (
+    get_async_session,
+    Deck as DeckModel,
+    Tag as TagModel
+)
 from flashcards_server.users import current_active_user
 from flashcards_server.schemas import UserRead
 from flashcards_server.api.tags import TagRead, TagCreate
@@ -106,13 +109,13 @@ async def create_deck(
     deck_data = deck.dict()
     tags = deck_data.pop("tags", [])
     new_deck: DeckModel = await current_user.create_deck(session=session, deck_data=deck_data)
-
-    if tags:
-        for tag in tags:
-            tag_object = await session.run_sync(TagModel.get_by_name, name=tag["name"]) 
-            if not tag_object:
-                tag_object = await session.run_sync(TagModel.create, name=tag["name"]) 
-            await session.run_sync(new_deck.assign_tag, tag_id=tag_object.id)
+    
+    # if tags:
+    #     for tag in tags:
+    #         tag_object = await session.run_sync(TagModel.get_by_name, name=tag["name"]) 
+    #         if not tag_object:
+    #             tag_object = await session.run_sync(TagModel.create, name=tag["name"]) 
+    #         await session.run_sync(new_deck.assign_tag, tag_id=tag_object.id)
 
     return new_deck
 

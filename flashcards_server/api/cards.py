@@ -5,13 +5,13 @@ from datetime import datetime
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from flashcards_core.database import (
+
+from flashcards_server.database import (
+    get_async_session,
     Card as CardModel,
     Tag as TagModel,
     Fact as FactModel,
 )
-
-from flashcards_server.database import get_async_session
 from flashcards_server.api.decks import router, valid_deck
 from flashcards_server.api.facts import FactRead
 from flashcards_server.api.tags import TagRead, TagCreate
@@ -56,7 +56,7 @@ class Review(BaseModel):
         orm_mode = True
 
 
-def valid_card(
+async def valid_card(
     session: Session, user: UserRead, deck_id: UUID, card_id: UUID
 ) -> CardModel:
     """
@@ -68,7 +68,7 @@ def valid_card(
     :raises HTTPException if any check fails
     """
     valid_deck(session=session, user=user, deck_id=deck_id)
-    card = CardModel.get_one(session=session, object_id=card_id)
+    card = await CardModel.get_one_async(session=session, object_id=card_id)
     if card is None or card.deck_id != deck_id:
         raise HTTPException(
             status_code=404, detail=f"Card with ID '{card_id}' not found"
@@ -77,7 +77,7 @@ def valid_card(
 
 
 @router.get("/{deck_id}/cards", response_model=List[CardRead])
-def get_cards(
+async def get_cards(
     deck_id: UUID,
     offset: int = 0,
     limit: int = 100,
@@ -93,18 +93,18 @@ def get_cards(
     :returns: List of cards.
     """
     valid_deck(session=session, user=current_user, deck_id=deck_id)
-    db_cards = (
-        session.query(CardModel)
-        .filter(CardModel.deck_id == deck_id)
+    stmt = (
+        CardModel.select()
+        .where(CardModel.deck_id == deck_id)
         .offset(offset)
         .limit(limit)
-        .all()
     )
-    return db_cards
+    results = await session.execute(stmt)
+    return results.all()
 
 
 @router.get("/{deck_id}/cards/{card_id}", response_model=CardRead)
-def get_card(
+async def get_card(
     deck_id: UUID,
     card_id: UUID,
     current_user: UserRead = Depends(current_active_user),
@@ -117,7 +117,7 @@ def get_card(
     :param card_id: the id of the card to get
     :returns: The details of the card.
     """
-    card = valid_card(
+    card = await valid_card(
         session=session, user=current_user, deck_id=deck_id, card_id=card_id
     )
     return card
@@ -144,18 +144,18 @@ def create_card(
     tags = card_data.pop("tags", [])
     question_context = card_data.pop("question_context_facts", [])
     answer_context = card_data.pop("answer_context_facts", [])
-    new_card = CardModel.create(session=session, **card_data)
+    new_card = CardModel.create_async(session=session, **card_data)
 
     if tags:
         for tag in tags:
-            tag_object = TagModel.get_by_name(session=session, name=tag["name"])
+            tag_object = TagModel.get_one_async(session=session, object_id=tag["name"])
             if not tag_object:
-                tag_object = TagModel.create(session=session, name=tag["name"])
+                tag_object = TagModel.create_async(session=session, name=tag["name"])
             new_card.assign_tag(session=session, tag_id=tag_object.id)
 
     if question_context:
         for fact in question_context:
-            fact_object = FactModel.get_one(session=session, object_id=fact)
+            fact_object = FactModel.get_one_async(session=session, object_id=fact)
             if not fact_object:
                 raise HTTPException(
                     status_code=404, detail=f"Fact with ID '{fact}' not found"
@@ -164,7 +164,7 @@ def create_card(
 
     if answer_context:
         for fact in answer_context:
-            fact_object = FactModel.get_one(session=session, object_id=fact)
+            fact_object = FactModel.get_one_async(session=session, object_id=fact)
             if not fact_object:
                 raise HTTPException(
                     status_code=404, detail=f"Fact with ID '{fact}' not found"
@@ -175,7 +175,7 @@ def create_card(
 
 
 @router.patch("/{deck_id}/cards/{card_id}", response_model=CardRead)
-def edit_card(
+async def edit_card(
     deck_id: UUID,
     card_id: UUID,
     new_card_data: CardPatch,
@@ -197,12 +197,12 @@ def edit_card(
     new_model_data = {
         key: value for key, value in new_model.dict().items() if value is not None
     }
-    CardModel.update(session=session, object_id=card_id, **new_model_data)
-    return CardModel.get_one(session=session, object_id=card_id)
+    await CardModel.update_async(session=session, object_id=card_id, **new_model_data)
+    return CardModel.get_one_async(session=session, object_id=card_id)
 
 
 @router.get("/{deck_id}/cards/{card_id}/reviews", response_model=List[Review])
-def get_reviews(
+async def get_reviews(
     deck_id: UUID,
     card_id: UUID,
     current_user: UserRead = Depends(current_active_user),
@@ -215,14 +215,14 @@ def get_reviews(
     :param card_id: the id of the card to get the reviews of
     :returns: The reviews of the card.
     """
-    card = valid_card(
+    card = await valid_card(
         session=session, user=current_user, deck_id=deck_id, card_id=card_id
     )
     return card.reviews
 
 
 @router.put("/{deck_id}/cards/{card_id}/tags/{tag_name}", response_model=CardRead)
-def assign_tag_to_card(
+async def assign_tag_to_card(
     deck_id: UUID,
     card_id: UUID,
     tag_name: str,
@@ -237,17 +237,17 @@ def assign_tag_to_card(
     :param tag_name: the tag to assign to this card
     :returns: The modified card
     """
-    card = valid_card(
+    card = await valid_card(
         session=session, user=current_user, deck_id=deck_id, card_id=card_id
     )
-    tag = TagModel.get_by_name(session=session, name=tag_name)
+    tag = TagModel.get_one_async(session=session, name=tag_name)
     if not tag:
-        tag = TagModel.create(session=session, name=tag_name)
+        tag = TagModel.create_async(session=session, name=tag_name)
     card.assign_tag(session=session, tag_id=tag.id)
 
 
 @router.delete("/{deck_id}/cards/{card_id}/tags/{tag_name}", response_model=CardRead)
-def remove_tag_from_card(
+async def remove_tag_from_card(
     deck_id: UUID,
     card_id: UUID,
     tag_name: str,
@@ -262,10 +262,10 @@ def remove_tag_from_card(
     :param tag_name: the tag to remove from this card
     :returns: The modified card
     """
-    card = valid_card(
+    card = await valid_card(
         session=session, user=current_user, deck_id=deck_id, card_id=card_id
     )
-    tag = TagModel.get_by_name(session=session, name=tag_name)
+    tag = TagModel.get_one_async(session=session, name=tag_name)
     if not tag:
         raise HTTPException(status_code=404, detail=f"Tag '{tag_name}' doesn't exist.")
     card.remove_tag(session=session, tag_id=tag.id)
@@ -274,7 +274,7 @@ def remove_tag_from_card(
 @router.put(
     "/{deck_id}/cards/{card_id}/context/question/{fact_id}", response_model=CardRead
 )
-def assign_question_context_to_card(
+async def assign_question_context_to_card(
     deck_id: UUID,
     card_id: UUID,
     fact_id: UUID,
@@ -289,10 +289,10 @@ def assign_question_context_to_card(
     :param fact_id: the fact to assign as question context to this card
     :returns: The modified card
     """
-    card = valid_card(
+    card = await valid_card(
         session=session, user=current_user, deck_id=deck_id, card_id=card_id
     )
-    fact = FactModel.get_one(session=session, object_id=fact_id)
+    fact = FactModel.get_one_async(session=session, object_id=fact_id)
     if not fact:
         raise HTTPException(
             status_code=404, detail=f"Fact with ID '{fact_id}' doesn't exist."
@@ -303,7 +303,7 @@ def assign_question_context_to_card(
 @router.delete(
     "/{deck_id}/cards/{card_id}/context/question/{fact_id}", response_model=CardRead
 )
-def remove_question_context_from_card(
+async def remove_question_context_from_card(
     deck_id: UUID,
     card_id: UUID,
     fact_id: UUID,
@@ -318,10 +318,10 @@ def remove_question_context_from_card(
     :param fact_id: the id of the fact to remove from the question context
     :returns: The modified card
     """
-    card = valid_card(
+    card = await valid_card(
         session=session, user=current_user, deck_id=deck_id, card_id=card_id
     )
-    fact = FactModel.get_one(session=session, object_id=fact_id)
+    fact = FactModel.get_one_async(session=session, object_id=fact_id)
     if not fact:
         raise HTTPException(
             status_code=404, detail=f"Fact with ID '{fact_id}' doesn't exist."
@@ -330,7 +330,7 @@ def remove_question_context_from_card(
 
 
 @router.put("/{deck_id}/cards/{card_id}/context/answer/{fact_id}", response_model=CardRead)
-def assign_answer_context_to_card(
+async def assign_answer_context_to_card(
     deck_id: UUID,
     card_id: UUID,
     fact_id: UUID,
@@ -345,10 +345,10 @@ def assign_answer_context_to_card(
     :param fact_id: the fact to assign as answer context to this card
     :returns: The modified card
     """
-    card = valid_card(
+    card = await valid_card(
         session=session, user=current_user, deck_id=deck_id, card_id=card_id
     )
-    fact = FactModel.get_one(session=session, object_id=fact_id)
+    fact = FactModel.get_one_async(session=session, object_id=fact_id)
     if not fact:
         raise HTTPException(
             status_code=404, detail=f"Fact with ID '{fact_id}' doesn't exist."
@@ -359,7 +359,7 @@ def assign_answer_context_to_card(
 @router.delete(
     "/{deck_id}/cards/{card_id}/context/answer/{fact_id}", response_model=CardRead
 )
-def remove_answer_context_from_card(
+async def remove_answer_context_from_card(
     deck_id: UUID,
     card_id: UUID,
     fact_id: UUID,
@@ -374,10 +374,10 @@ def remove_answer_context_from_card(
     :param fact_id: the id of the fact to remove from the answer context
     :returns: The modified card
     """
-    card = valid_card(
+    card = await valid_card(
         session=session, user=current_user, deck_id=deck_id, card_id=card_id
     )
-    fact = FactModel.get_one(session=session, object_id=fact_id)
+    fact = FactModel.get_one_async(session=session, object_id=fact_id)
     if not fact:
         raise HTTPException(
             status_code=404, detail=f"Fact with ID '{fact_id}' doesn't exist."
@@ -386,7 +386,7 @@ def remove_answer_context_from_card(
 
 
 @router.delete("/{deck_id}/cards/{card_id}")
-def delete_card(
+async def delete_card(
     deck_id: UUID,
     card_id: UUID,
     current_user: UserRead = Depends(current_active_user),
@@ -399,5 +399,5 @@ def delete_card(
     :param card_id: the id of the card to delete
     :returns: None
     """
-    valid_card(session=session, user=current_user, deck_id=deck_id, card_id=card_id)
-    CardModel.delete(session=session, object_id=card_id)
+    await valid_card(session=session, user=current_user, deck_id=deck_id, card_id=card_id)
+    CardModel.delete_async(session=session, object_id=card_id)
