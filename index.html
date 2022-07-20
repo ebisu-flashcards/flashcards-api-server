@@ -14,6 +14,7 @@
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -71,7 +72,7 @@
            <div itemprop="articleBody">
              
   <section id="flashcards-api-server-wip">
-<h1>Flashcards API Server - WIP<a class="headerlink" href="#flashcards-api-server-wip" title="Permalink to this headline"></a></h1>
+<h1>Flashcards API Server - WIP<a class="headerlink" href="#flashcards-api-server-wip" title="Permalink to this heading"></a></h1>
 <a class="reference external image-reference" href="https://github.com/ebisu-flashcards/flashcards-api/actions/workflows/tests.yml"><img alt="Unit Tests" src="https://github.com/ebisu-flashcards/flashcards-api/actions/workflows/tests.yml/badge.svg" /></a>
 <a class="reference external image-reference" href="https://coveralls.io/github/ebisu-flashcards/flashcards-api"><img alt="Coverage Status" src="https://coveralls.io/repos/github/ebisu-flashcards/flashcards-api/badge.svg" /></a>
 <a class="reference external image-reference" href="https://www.gnu.org/licenses/agpl-3.0"><img alt="License: AGPL v3" src="https://img.shields.io/badge/License-AGPLv3-blue.svg" /></a>
@@ -82,22 +83,22 @@
 Do not expect it to just download it and be able to run it if you’re not
 familiar with Python.</p>
 <section id="setup-with-docker">
-<h2>Setup with Docker<a class="headerlink" href="#setup-with-docker" title="Permalink to this headline"></a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt; git clone https://github.com/ebisu-flashcards/flashcards-server
-&gt; <span class="nb">cd</span> flashcards_server/
+<h2>Setup with Docker<a class="headerlink" href="#setup-with-docker" title="Permalink to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt; git clone https://github.com/ebisu-flashcards/flashcards-api-server
+&gt; <span class="nb">cd</span> flashcards_api_server/
 &gt; docker build -t flashcards .
 &gt; docker run --name flashcards-container -p <span class="m">8000</span>:8000 -d --rm flashcards
 </pre></div>
 </div>
 </section>
 <section id="openapi-docs">
-<h2>OpenAPI Docs<a class="headerlink" href="#openapi-docs" title="Permalink to this headline"></a></h2>
+<h2>OpenAPI Docs<a class="headerlink" href="#openapi-docs" title="Permalink to this heading"></a></h2>
 <p>Visit either <code class="docutils literal notranslate"><span class="pre">127.0.0.1:8000/docs</span></code> or <code class="docutils literal notranslate"><span class="pre">127.0.0.1:8000/redoc</span></code>.</p>
-<p>You can also see the API docs at <a class="reference external" href="https://ebisu-flashcards.github.io/flashcards-server/redoc">https://ebisu-flashcards.github.io/flashcards-server/redoc</a>.</p>
+<p>You can also see the API docs at <a class="reference external" href="https://ebisu-flashcards.github.io/flashcards-api-server/redoc">https://ebisu-flashcards.github.io/flashcards-api-server/redoc</a>.</p>
 </section>
 </section>
 <section id="contribute">
-<h1>Contribute<a class="headerlink" href="#contribute" title="Permalink to this headline"></a></h1>
+<h1>Contribute<a class="headerlink" href="#contribute" title="Permalink to this heading"></a></h1>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt; python3 -m venv venv
 &gt; <span class="nb">source</span> venv/bin/activate
 &gt; pip install -e .<span class="o">[</span>dev<span class="o">]</span>
