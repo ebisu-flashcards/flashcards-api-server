@@ -10,8 +10,8 @@ familiar with Python.
 
 ## Setup with Docker
 ```bash
-> git clone https://github.com/ebisu-flashcards/flashcards-server
-> cd flashcards_server/
+> git clone https://github.com/ebisu-flashcards/flashcards-api-server
+> cd flashcards_api_server/
 > docker build -t flashcards .
 > docker run --name flashcards-container -p 8000:8000 -d --rm flashcards
 ```
@@ -20,7 +20,7 @@ familiar with Python.
 
 Visit either `127.0.0.1:8000/docs` or `127.0.0.1:8000/redoc`.
 
-You can also see the API docs at https://ebisu-flashcards.github.io/flashcards-server/redoc.
+You can also see the API docs at https://ebisu-flashcards.github.io/flashcards-api-server/redoc.
 
 
 # Contribute
